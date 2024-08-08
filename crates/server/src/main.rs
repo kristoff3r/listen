@@ -3,7 +3,7 @@ use app::state::AppState;
 use axum::body::Body;
 use axum::extract::{Path, Request, State};
 use axum::response::IntoResponse;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::Router;
 use leptos::logging::log;
 use leptos::*;
@@ -26,6 +26,7 @@ pub mod db;
 pub mod error;
 pub mod fileserv;
 pub mod handlers;
+pub mod types;
 pub mod ws;
 
 pub use db::PgPool;
@@ -77,11 +78,12 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route(
-            "/api/*fn_name",
+            "/api/leptos/*fn_name",
             get(server_fn_handler).post(server_fn_handler),
         )
         .route("/health_check", get(|| async { "" }))
-        .route("/external/api/videos/:id", get(handlers::videos::get_video))
+        .route("/api/videos/:id", get(handlers::videos::get_video))
+        .route("/api/download", post(handlers::download::download_url))
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
         .layer(

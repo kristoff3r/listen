@@ -14,7 +14,7 @@
     in
     {
       devShell."${system}" = pkgs.mkShell {
-        DATABASE_URL= "postgres://postgres:postgres@localhost/listen";
+        DATABASE_URL= "postgres://postgres:postgres@localhost:5433/listen";
         buildInputs = with pkgs; [
           my-rust
           nodejs
@@ -27,6 +27,9 @@
           leptosfmt
           binaryen
           tailwindcss
+
+          yt-dlp
+          ffmpeg
         ];
       };
     };

@@ -54,7 +54,7 @@ pub fn embed(youtube_id: String) -> impl IntoView {
     }
 }
 
-#[server]
+#[server(GetVideos, "/api/leptos")]
 pub async fn get_videos() -> Result<Vec<Video>, ServerFnError> {
     use database::schema::videos::table as videos_table;
     use diesel::prelude::*;
