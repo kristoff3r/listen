@@ -1,10 +1,11 @@
 [package]
 name = "database"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [dependencies]
-anyhow = { workspace = true }
+anyhow.workspace = true
 diesel = { workspace = true, features = ["postgres", "time"], optional = true }
 serde = { workspace = true, features = ["derive"] }
 time = { workspace = true, features = ["serde"] }

@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
 
+package.license = "MIT/Apache-2.0"
+package.edition = "2021"
+package.version = "0.1.0"
+
 members = ["crates/app", "crates/database", "crates/frontend", "crates/server"]
 
 [workspace.dependencies]
