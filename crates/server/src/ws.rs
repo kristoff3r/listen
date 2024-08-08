@@ -32,4 +32,3 @@ async fn handle_socket(mut socket: WebSocket, _who: SocketAddr) {
         println!("{msg:?}");
     }
 }
-

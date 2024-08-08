@@ -19,10 +19,10 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/start-axum-workspace.css"/>
+        <Stylesheet id="leptos" href="/pkg/listen.css"/>
 
         <Title text="Listen"/>
-        <nav class="gap-1">
+        <nav class="flex gap-1">
             <a href="/">"Home"</a>
             <a href="/videos">"Videos"</a>
         </nav>

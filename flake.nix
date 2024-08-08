@@ -26,7 +26,7 @@
           wasm-bindgen-cli
           leptosfmt
           binaryen
-          dart-sass
+          tailwindcss
         ];
       };
     };

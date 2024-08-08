@@ -22,4 +22,3 @@ pub fn setup_database_pool(db_url: &str) -> anyhow::Result<PgPool> {
 
     Ok(pool)
 }
-

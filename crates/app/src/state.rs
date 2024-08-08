@@ -9,4 +9,3 @@ pub struct AppState {
     pub leptos_options: LeptosOptions,
     pub pool: Pool<AsyncPgConnection>,
 }
-

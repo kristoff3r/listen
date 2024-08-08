@@ -12,6 +12,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
+          components: rustfmt
+      - run: cargo fmt --check
+
   test:
     strategy:
       matrix:
@@ -32,7 +43,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           targets: wasm32-unknown-unknown, x86_64-unknown-linux-gnu
-          components: rustfmt, clippy
+          components: clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo check -p frontend --target wasm32-unknown-unknown
       - run: cargo check -p server --target x86_64-unknown-linux-gnu
