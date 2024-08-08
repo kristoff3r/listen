@@ -1,0 +1,16 @@
+[package]
+name = "database"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = { workspace = true }
+diesel = { workspace = true, features = ["postgres", "time"], optional = true }
+serde = { workspace = true, features = ["derive"] }
+time = { workspace = true, features = ["serde"] }
+
+[features]
+default = []
+diesel = ["dep:diesel"]

@@ -1,0 +1,14 @@
+{
+  "evenBetterToml.formatter.reorderKeys": true,
+  "[toml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
+  },
+  "rust-analyzer.cargo.targetDir": true,
+  "rust-analyzer.rustfmt.overrideCommand": [
+    "leptosfmt",
+    "--stdin",
+    "--rustfmt"
+  ]
+}

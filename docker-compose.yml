@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      - PGUSER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=listen
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "listen"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 80s
+
+volumes:
+  db-data:
