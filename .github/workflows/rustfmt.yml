@@ -1,0 +1,30 @@
+name: Automatically run nightly rustfmt
+
+on:
+  schedule:
+    - cron: "30 3 * * 1" # runs weekly on Monday at 3:30 UTC
+  workflow_dispatch:
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt
+      - name: Format
+        run: |
+          cargo fmt -- --config imports_granularity=Crate --config group_imports=StdExternalCrate
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
+          commit-message: Run nightly rustfmt
+          title: "[Automated] Run nightly rustfmt"
+          branch: automated/rustfmt
+          body: >
+            This is an auto-generated PR running nightly rustfmt
