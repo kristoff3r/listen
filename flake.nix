@@ -20,23 +20,23 @@
 
       craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
 
-      name = "listen";
-      version = "0.1.0";
 
       craneBuild = rec {
+        pname = "listen";
+        version = "0.1.0";
+
+        src = lib.cleanSourceWith {
+          src = craneLib.path ./.;
+          filter = path: type:
+            (lib.hasSuffix "tailwind.config.js" path) ||
+            (lib.hasSuffix ".css" path) ||
+            (lib.hasInfix "/public/" path) ||
+            # Default filter from crane (allow .rs files)
+            (craneLib.filterCargoSources path type)
+          ;
+        };
         args = {
-          src = lib.cleanSourceWith {
-              src = craneLib.path ./.;
-              filter = path: type:
-                (lib.hasSuffix "tailwind.config.js" path) ||
-                (lib.hasSuffix ".css" path) ||
-                (lib.hasInfix "/public/" path) ||
-                # Default filter from crane (allow .rs files)
-                (craneLib.filterCargoSources path type)
-              ;
-            };
-          inherit version;
-          pname = name;
+          inherit src pname version;
           strictDeps = true;
           buildInputs = with pkgs; [
             postgresql_16
@@ -70,12 +70,8 @@
           cargoClippyExtraArgs = "--all-targets --all-features -- --deny warnings";
         });
 
-        doc = craneLib.cargoDoc (args // {
-          inherit cargoArtifacts;
-        });
-
         fmt = craneLib.cargoFmt {
-          inherit cargoArtifacts;
+          inherit pname src;
         };
       };
     in
@@ -90,11 +86,10 @@
       };
       checks.${system} = {
         listen-clippy = craneBuild.clippy;
-        listen-doc = craneBuild.doc;
         listen-fmt = craneBuild.fmt;
       };
 
-      devShell."${system}" = pkgs.mkShell {
+      devShells."${system}".default = pkgs.mkShell {
         DATABASE_URL= "postgres://postgres:postgres@localhost:5433/listen";
         buildInputs = with pkgs; [
           rustToolchain
