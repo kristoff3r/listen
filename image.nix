@@ -6,11 +6,14 @@ buildImage {
 
   copyToRoot = pkgs.buildEnv {
     name = "image-root";
-    paths = [
-      pkgs.procps
-      pkgs.bashInteractive
-      pkgs.coreutils
-      pkgs.curl
+    paths = with pkgs; [
+      procps
+      bashInteractive
+      coreutils
+      curl
+
+      yt-dlp
+      ffmpeg
     ];
     pathsToLink = [ "/bin" ];
   };

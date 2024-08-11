@@ -50,6 +50,7 @@ with lib;
         environment = {
           RUST_LOG="info";
           DATABASE_URL="postgres://postgres:postgres@db/listen";
+          VIDEOS_DIR="/listen/videos";
         };
         volumes = [
           "/var/lib/listen:/listen"
@@ -61,7 +62,7 @@ with lib;
     };
 
     system.activationScripts.makeListenDir = lib.stringAfter [ "var" ] ''
-        mkdir -p /var/lib/listen
+        mkdir -p /var/lib/listen/videos
         ${pkgs.podman}/bin/podman pod exists listen || ${pkgs.podman}/bin/podman pod create -n listen -p '127.0.0.1:3000:3000'
     '';
 
@@ -74,6 +75,8 @@ with lib;
 
       virtualHosts."${cfg.domain}" =
         {
+          enableACME = true;
+          forceSSL = true;
           # locations."/" = {
           #   basicAuth."${cfg.username}" = cfg.password;
           #   root = "/var/lib/live-frontend";

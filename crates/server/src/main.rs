@@ -16,6 +16,7 @@ use tower_http::trace::{self, TraceLayer};
 use tracing::{info, warn, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use std::path::PathBuf;
 use std::{net::SocketAddr, time::Duration};
 
 use app::App;
@@ -69,13 +70,22 @@ async fn main() -> anyhow::Result<()> {
 
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
-    let addr = leptos_options.site_addr;
+    // let addr = leptos_options.site_addr;
+    let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
     let routes = generate_route_list(App);
 
     let state = AppState {
         pool,
         leptos_options,
+        videos_dir: PathBuf::from(
+            std::env::var("VIDEOS_DIR").unwrap_or_else(|_| "videos".to_string()),
+        )
+        .canonicalize()
+        .unwrap(),
     };
+
+    info!("listening on {}", addr);
+    info!("video dir: {}", state.videos_dir.display());
 
     let app = Router::new()
         .route(
@@ -84,6 +94,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .route("/health_check", get(|| async { "" }))
         .route("/api/videos/:id", get(handlers::videos::get_video))
+        .route("/api/videos/:id/play", get(handlers::videos::play_video))
         .route("/api/download", post(handlers::download::download_url))
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
@@ -99,7 +110,6 @@ async fn main() -> anyhow::Result<()> {
         )
         .with_state(state);
 
-    info!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(
         listener,

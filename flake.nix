@@ -31,6 +31,7 @@
             (lib.hasSuffix "tailwind.config.js" path) ||
             (lib.hasSuffix ".css" path) ||
             (lib.hasInfix "/public/" path) ||
+            (lib.hasInfix "/migrations/" path) ||
             # Default filter from crane (allow .rs files)
             (craneLib.filterCargoSources path type)
           ;

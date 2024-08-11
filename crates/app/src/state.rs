@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use axum::extract::FromRef;
 use diesel_async::{pooled_connection::deadpool::Pool, AsyncPgConnection};
 use leptos::LeptosOptions;
@@ -8,4 +10,5 @@ use leptos::LeptosOptions;
 pub struct AppState {
     pub leptos_options: LeptosOptions,
     pub pool: Pool<AsyncPgConnection>,
+    pub videos_dir: PathBuf,
 }

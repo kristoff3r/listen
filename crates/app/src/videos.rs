@@ -27,19 +27,22 @@ pub fn video(video: Video) -> impl IntoView {
     view! {
         <div>
             <h3>{video.title} - {video.id}</h3>
-            {video
-                .youtube_id
-                .clone()
-                .map(|youtube_id| {
-                    view! { <Embed youtube_id/> }
-                })}
-
+            <EmbedLocal id=video.id/>
         </div>
     }
 }
 
 #[component]
-pub fn embed(youtube_id: String) -> impl IntoView {
+pub fn embed_local(id: i32) -> impl IntoView {
+    view! {
+        <video controls>
+            <source src=format!("/api/videos/{id}/play") type="video/mp4"/>
+        </video>
+    }
+}
+
+#[component]
+pub fn embed_youtube(youtube_id: String) -> impl IntoView {
     view! {
         <iframe
             width="560"

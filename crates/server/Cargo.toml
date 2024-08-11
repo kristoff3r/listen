@@ -24,6 +24,7 @@ strum = { workspace = true, features = ["strum_macros", "derive"] }
 time = { workspace = true, features = ["serde"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite.workspace = true
+tokio-util.workspace = true
 tower = { workspace = true, features = ["util"] }
 tower-http = { workspace = true, features = ["fs", "trace", "timeout"] }
 tracing-error.workspace = true

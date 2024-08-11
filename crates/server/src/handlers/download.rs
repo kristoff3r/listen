@@ -1,4 +1,5 @@
 use anyhow::Ok;
+use app::state::AppState;
 use axum::extract::State;
 use axum::Json;
 use database::schema;
@@ -10,14 +11,15 @@ use youtube_dl::YoutubeDl;
 use diesel_async::RunQueryDsl;
 
 use crate::types::NewVideo;
-use crate::PgPool;
 
 #[derive(Deserialize, Debug)]
 pub struct DownloadRequest {
     url: String,
 }
 
-pub async fn download_url(State(pool): State<PgPool>, Json(req): Json<DownloadRequest>) {
+pub async fn download_url(State(state): State<AppState>, Json(req): Json<DownloadRequest>) {
+    let pool = state.pool;
+    let videos_dir = state.videos_dir.clone();
     tokio::task::spawn(async move {
         let res = YoutubeDl::new(&req.url)
             .socket_timeout("15")
@@ -40,9 +42,11 @@ pub async fn download_url(State(pool): State<PgPool>, Json(req): Json<DownloadRe
 
         info!("Inserted video: {} {:?} as id {id}", res.id, res.title);
 
+        // ffmpeg -i input.fil -c:v libx264 -crf 23 -profile:v main -pix_fmt yuv420p -c:a aac -ac 2 -b:a 128k -movflags faststart output.mp4
         YoutubeDl::new(&req.url)
-            .output_template(format!("{id}"))
-            .download_to_async("videos")
+            .format("mp4")
+            .output_template(format!("{id}.mp4"))
+            .download_to_async(videos_dir)
             .await
             .expect("download failed");
 
