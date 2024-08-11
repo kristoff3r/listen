@@ -107,6 +107,10 @@
           yt-dlp
           ffmpeg
         ];
+
+        packages = with pkgs; [
+          bashInteractive
+        ];
       };
     };
 }
