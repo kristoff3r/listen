@@ -74,42 +74,40 @@
           inherit pname src;
         };
       };
+
+      listen-api = craneBuild.package;
+      listen-api-image = pkgs.callPackage ./image.nix {
+        # inherit (nix2containerPkgs.nix2container) buildImage;
+        inherit (pkgs.dockerTools) buildImage;
+        inherit listen-api;
+      };
     in
     {
+      nixosModules.default = import ./module.nix { inherit listen-api-image; };
 
-      packages.${system} = rec {
-        listen-api = craneBuild.package;
-        image = pkgs.callPackage ./image.nix {
-          inherit (nix2containerPkgs.nix2container) buildImage;
-          inherit listen-api;
-        };
+      packages.${system} = {
+        inherit listen-api;
+        image = listen-api-image;
       };
+
       checks.${system} = {
         listen-clippy = craneBuild.clippy;
         listen-fmt = craneBuild.fmt;
       };
 
-      devShells."${system}".default = pkgs.mkShell {
+      devShells."${system}".default = craneLib.devShell {
         DATABASE_URL= "postgres://postgres:postgres@localhost:5433/listen";
-        buildInputs = with pkgs; [
-          rustToolchain
-          nodejs
-          postgresql_16
-          diesel-cli
-          cargo-watch
-          cargo-leptos
-          cargo-generate
-          wasm-bindgen-cli
-          leptosfmt
-          binaryen
-          tailwindcss
-
-          yt-dlp
-          ffmpeg
-        ];
+        inputsFrom = [ listen-api ];
 
         packages = with pkgs; [
           bashInteractive
+
+          leptosfmt
+          diesel-cli
+          wasm-bindgen-cli
+
+          yt-dlp
+          ffmpeg
         ];
       };
     };

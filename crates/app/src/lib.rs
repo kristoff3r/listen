@@ -32,7 +32,7 @@ pub fn App() -> impl IntoView {
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <main class="my-0 mx-auto max-w-3xl text-center">
+            <main class="my-0 mx-auto max-w-3xl text-center justif">
                 <ErrorBoundary fallback=|errors| {
                     view! {
                         <div class="error">

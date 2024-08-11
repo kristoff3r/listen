@@ -1,15 +1,16 @@
 [package]
-name = "database"
-version.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "database"
+version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
 diesel = { workspace = true, features = ["postgres", "time"], optional = true }
+diesel_async_migrations = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
 time = { workspace = true, features = ["serde"] }
 
 [features]
 default = []
-diesel = ["dep:diesel"]
+diesel = ["dep:diesel", "dep:diesel_async_migrations"]

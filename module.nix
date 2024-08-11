@@ -1,4 +1,5 @@
-{ config, lib, ... }:
+{ listen-api-image }:
+{ pkgs, config, lib, ... }:
 
 let
   cfg = config.services.listen;
@@ -27,20 +28,10 @@ with lib;
   };
 
   config = lib.mkIf (cfg.enable) {
-    systemd.services.create-listen-pod = {
-      serviceConfig.Type = "oneshot";
-      wantedBy = [
-        "podman-db.service"
-        "podman-listen-api.service"
-      ];
-      script = ''
-        ${pkgs.podman}/bin/podman pod exists listen || \
-          ${pkgs.podman}/bin/podman pod create -n listen -p '127.0.0.1:3000:3000'
-      '';
-    };
     virtualisation.oci-containers.backend = "podman";
     virtualisation.oci-containers.containers = {
       db = {
+        # hostname = "db";
         image = "postgres:16.4";
         environment = {
           POSTGRES_USER="postgres";
@@ -53,24 +44,33 @@ with lib;
         ];
       };
       listen-api = {
+        # hostname = "listen-api";
         image = "listen-api:nix";
-        ports = [
-          "127.0.0.1:3000:3000"
-        ];
+        imageFile = listen-api-image;
         environment = {
           RUST_LOG="info";
+          DATABASE_URL="postgres://postgres:postgres@db/listen";
         };
         volumes = [
           "/var/lib/listen:/listen"
         ];
+        extraOptions = [
+          "--pod" "listen"
+        ];
       };
     };
 
-    services.nginx = import ../nginx.nix {
-      logError = "stderr debug";
-      appendHttpConfig = ''
-        chunked_transfer_encoding on;
-      '';
+    system.activationScripts.makeListenDir = lib.stringAfter [ "var" ] ''
+        mkdir -p /var/lib/listen
+        ${pkgs.podman}/bin/podman pod exists listen || ${pkgs.podman}/bin/podman pod create -n listen -p '127.0.0.1:3000:3000'
+    '';
+
+    services.nginx = {
+      enable = true;
+      # logError = "stderr debug";
+      # appendHttpConfig = ''
+      #   chunked_transfer_encoding on;
+      # '';
 
       virtualHosts."${cfg.domain}" =
         {

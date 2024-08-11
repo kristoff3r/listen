@@ -1,23 +1,23 @@
 [package]
-name = "app"
-version.workspace = true
 edition.workspace = true
 license.workspace = true
+name = "app"
+version.workspace = true
 
 [dependencies]
 axum = { workspace = true, optional = true }
 cfg-if.workspace = true
+diesel = { workspace = true, features = ["postgres", "time"], optional = true }
 diesel-async = { workspace = true, features = [
     "postgres",
     "deadpool",
 ], optional = true }
-diesel = { workspace = true, features = ["postgres", "time"], optional = true }
 gloo-net = { workspace = true, features = ["http"] }
 http.workspace = true
+leptos.workspace = true
 leptos_axum = { workspace = true, optional = true }
 leptos_meta.workspace = true
 leptos_router.workspace = true
-leptos.workspace = true
 log.workspace = true
 reqwest = { workspace = true, default-features = false, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }

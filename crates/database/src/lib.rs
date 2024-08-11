@@ -7,6 +7,10 @@ use time::OffsetDateTime;
 #[cfg(feature = "diesel")]
 pub mod schema;
 
+#[cfg(feature = "diesel")]
+pub const MIGRATIONS: diesel_async_migrations::EmbeddedMigrations =
+    diesel_async_migrations::embed_migrations!();
+
 #[cfg_attr(feature = "diesel", derive(Queryable, Selectable))]
 #[cfg_attr(feature = "diesel", diesel(table_name = crate::schema::videos))]
 #[cfg_attr(feature = "diesel", diesel(check_for_backend(diesel::pg::Pg)))]

@@ -5,6 +5,7 @@ use axum::extract::{Path, Request, State};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
+use database::MIGRATIONS;
 use leptos::logging::log;
 use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -12,7 +13,7 @@ use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::{self, TraceLayer};
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use std::{net::SocketAddr, time::Duration};
@@ -47,24 +48,24 @@ async fn main() -> anyhow::Result<()> {
     info!("Connecting to database {db_url}");
     let pool = setup_database_pool(&db_url).context("setup datbase pool")?;
 
-    // {
-    //     let mut retries = 0;
-    //     let mut conn = loop {
-    //         match pool.get().await {
-    //             Ok(conn) => break conn,
-    //             Err(e) => {
-    //                 retries += 1;
-    //                 if retries > 3 {
-    //                     panic!("Could not connect to database: {e}");
-    //                 }
-    //                 warn!("Database not ready: {e}");
-    //                 tokio::time::sleep(Duration::from_millis(500)).await;
-    //             }
-    //         };
-    //     };
-    //     MIGRATIONS.run_pending_migrations(&mut conn).await?;
-    //     info!("Finished running migrations");
-    // }
+    {
+        let mut retries = 0;
+        let mut conn = loop {
+            match pool.get().await {
+                Ok(conn) => break conn,
+                Err(e) => {
+                    retries += 1;
+                    if retries > 3 {
+                        panic!("Could not connect to database: {e}");
+                    }
+                    warn!("Database not ready: {e}");
+                    tokio::time::sleep(Duration::from_millis(500)).await;
+                }
+            };
+        };
+        MIGRATIONS.run_pending_migrations(&mut conn).await?;
+        info!("Finished running migrations");
+    }
 
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;

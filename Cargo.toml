@@ -16,9 +16,9 @@ cfg-if = "1.0.0"
 console_error_panic_hook = "0.1"
 console_log = "1.0.0"
 deadpool = "0.12.1"
-diesel = "2.2"
-diesel-async = "0.5.0"
-# diesel_async_migrations = "0.12.0"
+diesel = "2.1"
+diesel-async = "0.4.0"
+diesel_async_migrations = "0.12.0"
 dotenvy = "0.15.7"
 futures = "0.3"
 futures-util = { version = "0.3", default-features = false }
@@ -70,13 +70,14 @@ site-root = "target/site"
 # The site-root relative folder where all compiled output (JS, WASM and CSS) is written
 # Defaults to pkg
 site-pkg-dir = "pkg"
+style-file = "style.css"
 
 tailwind-config-file = "tailwind.config.js"
 tailwind-input-file = "tailwind.css"
 
 assets-dir = "crates/public"
 reload-port = 3001
-site-addr = "127.0.0.1:3000"
+site-addr = "0.0.0.0:3000"
 
 end2end-cmd = "npx playwright test"
 end2end-dir = "end2end"
