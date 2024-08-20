@@ -5,21 +5,20 @@
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
     crane.url = "github:ipetkov/crane";
     crane.inputs.nixpkgs.follows = "nixpkgs";
-    nix2container.url = "github:nlewo/nix2container";
-    nix2container.inputs.nixpkgs.follows = "nixpkgs";
+    # nix2container.url = "github:nlewo/nix2container";
+    # nix2container.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { nixpkgs, rust-overlay, crane, nix2container, ... }:
+  outputs = inputs:
     let
       system = "x86_64-linux";
-      overlays = [ (import rust-overlay) ];
-      pkgs = import nixpkgs { inherit system overlays; };
-      nix2containerPkgs = nix2container.packages.${system};
+      overlays = [ (import inputs.rust-overlay) ];
+      pkgs = import inputs.nixpkgs { inherit system overlays; };
+      # nix2containerPkgs = inputs.nix2container.packages.${system};
       lib = pkgs.lib;
       rustToolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
-      craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-
+      craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rustToolchain;
 
       craneBuild = rec {
         pname = "listen";
@@ -102,6 +101,7 @@
 
         packages = with pkgs; [
           bashInteractive
+          devenv
 
           leptosfmt
           diesel-cli

@@ -31,7 +31,6 @@ with lib;
     virtualisation.oci-containers.backend = "podman";
     virtualisation.oci-containers.containers = {
       db = {
-        # hostname = "db";
         image = "postgres:16.4";
         environment = {
           POSTGRES_USER="postgres";
@@ -44,7 +43,6 @@ with lib;
         ];
       };
       listen-api = {
-        # hostname = "listen-api";
         image = "listen-api:nix";
         imageFile = listen-api-image;
         environment = {
