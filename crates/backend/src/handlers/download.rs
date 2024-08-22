@@ -4,6 +4,7 @@ use database::schema;
 use diesel::insert_into;
 use diesel_async::RunQueryDsl;
 use serde::Deserialize;
+use tokio::process::Command;
 use tracing::info;
 use ui::state::VideosDir;
 use youtube_dl::YoutubeDl;
@@ -42,13 +43,47 @@ pub async fn download_url(
 
         info!("Inserted video: {} {:?} as id {id}", res.id, res.title);
 
-        // ffmpeg -i input.fil -c:v libx264 -crf 23 -profile:v main -pix_fmt yuv420p -c:a aac -ac 2 -b:a 128k -movflags faststart output.mp4
+        let dir = tempfile::tempdir_in(&*videos_dir)?;
+
         YoutubeDl::new(&req.url)
-            .format("mp4")
-            .output_template(format!("{id}.mp4"))
-            .download_to_async(&*videos_dir)
+            .output_template("%(id)s.%(ext)s")
+            .format("bestvideo*[height<=1080]+bestaudio/best[height<=1080]")
+            .download_to_async(&dir)
             .await
             .expect("download failed");
+
+        let foo = dir.as_ref().read_dir()?;
+        for f in foo {
+            let f = f?;
+            info!(
+                "Running ffmpeg on {}",
+                f.path().file_name().unwrap().to_string_lossy()
+            );
+            Command::new("ffmpeg")
+                .arg("-i")
+                .arg(f.path())
+                .args(&[
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    "23",
+                    "-profile:v",
+                    "main",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:a",
+                    "aac",
+                    "-ac",
+                    "2",
+                    "-b:a",
+                    "128k",
+                    "-movflags",
+                    "faststart",
+                ])
+                .arg(videos_dir.join(format!("{id}.mp4")))
+                .status()
+                .await?;
+        }
 
         info!("Downloaded video: {} {:?}", res.id, res.title);
 

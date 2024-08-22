@@ -34,3 +34,4 @@ youtube_dl.workspace = true
 
 database = { path = "../database", features = ["diesel"] }
 ui = { path = "../ui", default-features = false, features = ["ssr"] }
+tempfile = "3.12.0"
