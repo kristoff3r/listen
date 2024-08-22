@@ -46,4 +46,4 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo check -p frontend --target wasm32-unknown-unknown
-      - run: cargo check -p server --target x86_64-unknown-linux-gnu
+      - run: cargo check -p backend --target x86_64-unknown-linux-gnu
