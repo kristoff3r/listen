@@ -5,19 +5,21 @@ use diesel::insert_into;
 use diesel_async::RunQueryDsl;
 use serde::Deserialize;
 use tracing::info;
-use ui::state::AppState;
+use ui::state::VideosDir;
 use youtube_dl::YoutubeDl;
 
-use crate::types::NewVideo;
+use crate::{types::NewVideo, PgPool};
 
 #[derive(Deserialize, Debug)]
 pub struct DownloadRequest {
     url: String,
 }
 
-pub async fn download_url(State(state): State<AppState>, Json(req): Json<DownloadRequest>) {
-    let pool = state.pool;
-    let videos_dir = state.videos_dir.clone();
+pub async fn download_url(
+    State(pool): State<PgPool>,
+    State(videos_dir): State<VideosDir>,
+    Json(req): Json<DownloadRequest>,
+) {
     tokio::task::spawn(async move {
         let res = YoutubeDl::new(&req.url)
             .socket_timeout("15")
@@ -44,7 +46,7 @@ pub async fn download_url(State(state): State<AppState>, Json(req): Json<Downloa
         YoutubeDl::new(&req.url)
             .format("mp4")
             .output_template(format!("{id}.mp4"))
-            .download_to_async(videos_dir)
+            .download_to_async(&*videos_dir)
             .await
             .expect("download failed");
 

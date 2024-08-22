@@ -20,7 +20,10 @@ use tower_http::{
 };
 use tracing::{info, warn, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use ui::{state::AppState, App};
+use ui::{
+    state::{AppState, VideosDir},
+    App,
+};
 
 use crate::db::setup_database_pool;
 
@@ -72,43 +75,20 @@ async fn main() -> anyhow::Result<()> {
     let leptos_options = conf.leptos_options;
     // let addr = leptos_options.site_addr;
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
-    let routes = generate_route_list(App);
-
     let state = AppState {
         pool,
         leptos_options,
-        videos_dir: PathBuf::from(
-            std::env::var("VIDEOS_DIR").unwrap_or_else(|_| "videos".to_string()),
-        )
-        .canonicalize()
-        .unwrap(),
+        videos_dir: VideosDir(
+            PathBuf::from(std::env::var("VIDEOS_DIR").unwrap_or_else(|_| "videos".to_string()))
+                .canonicalize()
+                .unwrap(),
+        ),
     };
 
     info!("listening on {}", addr);
     info!("video dir: {}", state.videos_dir.display());
 
-    let app = Router::new()
-        .route(
-            "/api/leptos/*fn_name",
-            get(server_fn_handler).post(server_fn_handler),
-        )
-        .route("/health_check", get(|| async { "" }))
-        .route("/api/videos/:id", get(handlers::videos::get_video))
-        .route("/api/videos/:id/play", get(handlers::videos::play_video))
-        .route("/api/download", post(handlers::download::download_url))
-        .leptos_routes_with_handler(routes, get(leptos_routes_handler))
-        .fallback(file_and_error_handler)
-        .layer(
-            ServiceBuilder::new()
-                .layer(
-                    TraceLayer::new_for_http()
-                        .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
-                        .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
-                        .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
-                )
-                .layer(TimeoutLayer::new(Duration::from_secs(3))),
-        )
-        .with_state(state);
+    let app = routes().with_state(state);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(
@@ -120,6 +100,30 @@ async fn main() -> anyhow::Result<()> {
     .unwrap();
 
     Ok(())
+}
+
+fn routes() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/api/leptos/*fn_name",
+            get(server_fn_handler).post(server_fn_handler),
+        )
+        .route("/health_check", get(|| async { "" }))
+        .route("/api/videos/:id", get(handlers::videos::get_video))
+        .route("/api/videos/:id/play", get(handlers::videos::play_video))
+        .route("/api/download", post(handlers::download::download_url))
+        .leptos_routes_with_handler(generate_route_list(App), get(leptos_routes_handler))
+        .fallback(file_and_error_handler)
+        .layer(
+            ServiceBuilder::new()
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                        .on_failure(trace::DefaultOnFailure::new().level(Level::ERROR))
+                        .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+                )
+                .layer(TimeoutLayer::new(Duration::from_secs(3))),
+        )
 }
 
 async fn shutdown_signal() {
@@ -161,7 +165,7 @@ async fn server_fn_handler(
 
 pub async fn leptos_routes_handler(
     State(app_state): State<AppState>,
-    axum::extract::State(option): axum::extract::State<leptos::LeptosOptions>,
+    State(option): State<leptos::LeptosOptions>,
     request: Request<Body>,
 ) -> axum::response::Response {
     let handler = leptos_axum::render_app_async_with_context(
