@@ -8,7 +8,8 @@ version.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-app = { path = "../app", default-features = false, features = ["hydrate"] }
+ui = { path = "../ui", default-features = false, features = ["hydrate"] }
+
 console_error_panic_hook.workspace = true
 console_log.workspace = true
 leptos = { workspace = true, features = ["hydrate"] }

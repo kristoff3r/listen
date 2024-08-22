@@ -1,5 +1,4 @@
 use anyhow::Context;
-use app::state::AppState;
 use axum::body::Body;
 use axum::extract::{Path, Request, State};
 use axum::response::IntoResponse;
@@ -19,8 +18,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use std::path::PathBuf;
 use std::{net::SocketAddr, time::Duration};
 
-use app::App;
 use fileserv::file_and_error_handler;
+use ui::state::AppState;
+use ui::App;
 
 use crate::db::setup_database_pool;
 

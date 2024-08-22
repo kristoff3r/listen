@@ -32,5 +32,5 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 tracing.workspace = true
 youtube_dl.workspace = true
 
-app = { path = "../app", default-features = false, features = ["ssr"] }
 database = { path = "../database", features = ["diesel"] }
+ui = { path = "../ui", default-features = false, features = ["ssr"] }

@@ -5,29 +5,46 @@ use leptos::*;
 pub fn VideosPage() -> impl IntoView {
     let action = create_server_action::<GetVideos>();
     let videos = create_resource(move || action.version().get(), |_| get_videos());
+    let (active, set_active) = create_signal::<Option<i32>>(None);
 
     view! {
-        <h2>"video"</h2>
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
-            <ul>
-                {move || match videos.get() {
-                    Some(Ok(videos)) => {
-                        videos.into_iter().map(|video| view! { <Video video/> }).collect_view()
-                    }
-                    Some(Err(e)) => view! { {format!("error loading video: {e}").into_view()} },
-                    _ => view! { <p>"Loading..."</p> }.into_view(),
-                }}
+            <div class="flex w-full min-h-screen">
+                <div class="flex items-center justify-center w-[80%] bg-red-400">
+                    {move || match active.get() {
+                        Some(id) => view! { <EmbedLocal id=id/> }.into_view(),
+                        None => view! { <p>"Select a video"</p> }.into_view(),
+                    }}
 
-            </ul>
+                </div>
+                <div class="w-[20%] bg-blue-400">
+                    {move || match videos.get() {
+                        Some(Ok(videos)) => view! { <VideoList videos set_active/> }.into_view(),
+                        Some(Err(e)) => view! { {format!("error loading video: {e}").into_view()} },
+                        _ => view! { <p>"Loading..."</p> }.into_view(),
+                    }}
+
+                </div>
+
+            </div>
         </Transition>
     }
 }
+
 #[component]
-pub fn video(video: Video) -> impl IntoView {
+pub fn video_list(videos: Vec<Video>, set_active: WriteSignal<Option<i32>>) -> impl IntoView {
+    videos
+        .into_iter()
+        .map(|video| view! { <VideoListEntry video set_active/> })
+        .collect_view()
+}
+
+#[component]
+pub fn video_list_entry(video: Video, set_active: WriteSignal<Option<i32>>) -> impl IntoView {
     view! {
         <div>
-            <h3>{video.title} - {video.id}</h3>
-            <EmbedLocal id=video.id/>
+            {video.title}
+            <button on:click=move |_| set_active.set(Some(video.id))>{"select"}</button>
         </div>
     }
 }
@@ -35,7 +52,7 @@ pub fn video(video: Video) -> impl IntoView {
 #[component]
 pub fn embed_local(id: i32) -> impl IntoView {
     view! {
-        <video controls>
+        <video class="min-w-full min-h-full" controls>
             <source src=format!("/api/videos/{id}/play") type="video/mp4"/>
         </video>
     }

@@ -22,17 +22,14 @@ pub fn App() -> impl IntoView {
         <Stylesheet id="leptos" href="/pkg/listen.css"/>
 
         <Title text="Listen"/>
-        <nav class="flex gap-1">
-            <a href="/">"Home"</a>
-            <a href="/videos">"Videos"</a>
-        </nav>
+        <Link rel="icon" href="favicon.png" sizes="32x32"/>
 
         <Router fallback=|| {
             let mut outside_errors = Errors::default();
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <main class="my-0 mx-auto max-w-3xl text-center justif">
+            <main class="my-0 mx-auto text-center justif">
                 <ErrorBoundary fallback=|errors| {
                     view! {
                         <div class="error">
@@ -50,18 +47,11 @@ pub fn App() -> impl IntoView {
                         </div>
                     }
                 }>
-
                     <Routes>
-                        <Route path="" view=DashBoard/>
-                        <Route path="/videos" view=VideosPage/>
+                        <Route path="/" view=VideosPage/>
                     </Routes>
                 </ErrorBoundary>
             </main>
         </Router>
     }
-}
-
-#[component]
-fn DashBoard() -> impl IntoView {
-    view! { <h2>"Dashboard"</h2> }
 }

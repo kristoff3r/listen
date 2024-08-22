@@ -1,4 +1,3 @@
-use app::App;
 use axum::response::Response as AxumResponse;
 use axum::{
     body::Body,
@@ -9,6 +8,7 @@ use axum::{
 use leptos::*;
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
+use ui::App;
 
 pub async fn file_and_error_handler(
     uri: Uri,

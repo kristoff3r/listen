@@ -1,4 +1,3 @@
-use app::state::AppState;
 use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::http::header;
@@ -10,6 +9,7 @@ use diesel_async::RunQueryDsl;
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 use tracing::info;
+use ui::state::AppState;
 
 use crate::{error::Result, PgPool};
 

@@ -5,7 +5,7 @@ package.edition = "2021"
 package.license = "MIT/Apache-2.0"
 package.version = "0.1.0"
 
-members = ["crates/app", "crates/database", "crates/frontend", "crates/server"]
+members = ["crates/database", "crates/frontend", "crates/server", "crates/ui"]
 
 [workspace.dependencies]
 anyhow = "1.0.86"
@@ -76,7 +76,7 @@ style-file = "style.css"
 tailwind-config-file = "tailwind.config.js"
 tailwind-input-file = "tailwind.css"
 
-assets-dir = "crates/public"
+assets-dir = "public"
 reload-port = 3001
 site-addr = "0.0.0.0:3000"
 

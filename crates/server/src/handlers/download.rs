@@ -1,11 +1,11 @@
 use anyhow::Ok;
-use app::state::AppState;
 use axum::extract::State;
 use axum::Json;
 use database::schema;
 use diesel::insert_into;
 use serde::Deserialize;
 use tracing::info;
+use ui::state::AppState;
 use youtube_dl::YoutubeDl;
 
 use diesel_async::RunQueryDsl;
