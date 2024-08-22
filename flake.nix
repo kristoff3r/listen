@@ -43,7 +43,7 @@
           ];
           nativeBuildInputs = with pkgs; [
             makeWrapper
-            cargo-leptos
+            (callPackage ./cargo-leptos.nix {})
             binaryen
             tailwindcss
           ];
