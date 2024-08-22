@@ -1,8 +1,10 @@
-use axum::body::Body;
-use axum::extract::{Path, State};
-use axum::http::header;
-use axum::response::IntoResponse;
-use axum::Json;
+use axum::{
+    body::Body,
+    extract::{Path, State},
+    http::header,
+    response::IntoResponse,
+    Json,
+};
 use database::Video;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;

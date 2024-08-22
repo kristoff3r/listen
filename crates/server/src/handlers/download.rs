@@ -1,14 +1,12 @@
 use anyhow::Ok;
-use axum::extract::State;
-use axum::Json;
+use axum::{extract::State, Json};
 use database::schema;
 use diesel::insert_into;
+use diesel_async::RunQueryDsl;
 use serde::Deserialize;
 use tracing::info;
 use ui::state::AppState;
 use youtube_dl::YoutubeDl;
-
-use diesel_async::RunQueryDsl;
 
 use crate::types::NewVideo;
 

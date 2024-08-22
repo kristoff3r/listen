@@ -1,9 +1,8 @@
-use axum::response::Response as AxumResponse;
 use axum::{
     body::Body,
     extract::State,
     http::{Request, Response, StatusCode, Uri},
-    response::IntoResponse,
+    response::{IntoResponse, Response as AxumResponse},
 };
 use leptos::*;
 use tower::ServiceExt;

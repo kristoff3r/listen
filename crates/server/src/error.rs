@@ -1,8 +1,10 @@
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
+use std::fmt::{self, Debug, Display};
+
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-use std::fmt::{self, Debug};
 use strum::Display;
 use tracing_error::SpanTrace;
 

@@ -1,26 +1,26 @@
+use std::{net::SocketAddr, path::PathBuf, time::Duration};
+
 use anyhow::Context;
-use axum::body::Body;
-use axum::extract::{Path, Request, State};
-use axum::response::IntoResponse;
-use axum::routing::{get, post};
-use axum::Router;
+use axum::{
+    body::Body,
+    extract::{Path, Request, State},
+    response::IntoResponse,
+    routing::{get, post},
+    Router,
+};
 use database::MIGRATIONS;
-use leptos::logging::log;
-use leptos::*;
+use fileserv::file_and_error_handler;
+use leptos::{logging::log, *};
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tokio::signal;
 use tower::ServiceBuilder;
-use tower_http::timeout::TimeoutLayer;
-use tower_http::trace::{self, TraceLayer};
+use tower_http::{
+    timeout::TimeoutLayer,
+    trace::{self, TraceLayer},
+};
 use tracing::{info, warn, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use std::path::PathBuf;
-use std::{net::SocketAddr, time::Duration};
-
-use fileserv::file_and_error_handler;
-use ui::state::AppState;
-use ui::App;
+use ui::{state::AppState, App};
 
 use crate::db::setup_database_pool;
 

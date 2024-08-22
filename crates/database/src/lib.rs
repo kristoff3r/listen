@@ -1,6 +1,5 @@
 #[cfg(feature = "diesel")]
 use diesel::{Queryable, Selectable};
-
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 

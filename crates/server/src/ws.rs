@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use axum::{
     extract::{
         ws::{WebSocket, WebSocketUpgrade},
@@ -6,7 +8,6 @@ use axum::{
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
-use std::net::SocketAddr;
 use tracing::info;
 
 pub async fn ws_handler(
