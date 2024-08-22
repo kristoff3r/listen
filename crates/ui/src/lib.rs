@@ -1,10 +1,9 @@
-use crate::error_template::{AppError, ErrorTemplate};
-
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-
 use videos::VideosPage;
+
+use crate::error_template::{AppError, ErrorTemplate};
 
 pub mod api;
 pub mod error_template;

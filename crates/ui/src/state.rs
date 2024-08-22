@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use axum::extract::FromRef;
 use diesel_async::{pooled_connection::deadpool::Pool, AsyncPgConnection};
@@ -10,5 +10,16 @@ use leptos::LeptosOptions;
 pub struct AppState {
     pub leptos_options: LeptosOptions,
     pub pool: Pool<AsyncPgConnection>,
-    pub videos_dir: PathBuf,
+    pub videos_dir: VideosDir,
+}
+
+#[derive(Clone, Debug)]
+pub struct VideosDir(pub PathBuf);
+
+impl std::ops::Deref for VideosDir {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
