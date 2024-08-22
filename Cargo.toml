@@ -8,17 +8,17 @@ package.version = "0.1.0"
 members = ["crates/app", "crates/database", "crates/frontend", "crates/server"]
 
 [workspace.dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.86"
 axum = "0.7.5"
 axum-extra = "0.9.3"
-axum-test = "15.3.1"
+axum-test = "15.5.3"
 cfg-if = "1.0.0"
 console_error_panic_hook = "0.1"
 console_log = "1.0.0"
 deadpool = "0.12.1"
-diesel = "2.1"
-diesel-async = "0.4.0"
-diesel_async_migrations = "0.12.0"
+diesel = "2.2.2"
+diesel-async = "0.5.0"
+diesel_async_migrations = "0.14.0"
 dotenvy = "0.15.7"
 futures = "0.3"
 futures-util = { version = "0.3", default-features = false }
@@ -29,24 +29,24 @@ leptos = "0.6"
 leptos_axum = "0.6"
 leptos_meta = "0.6"
 leptos_router = "0.6"
-log = "0.4.21"
-reqwest = { version = "0.12.6", default-features = false, features = [
+log = "0.4.22"
+reqwest = { version = "0.12.7", default-features = false, features = [
     "rustls-tls",
 ] }
 serde = "1.0"
 serde_json = "1.0"
-strum = "0.26.2"
+strum = "0.26.3"
 thiserror = "1"
-time = "0.3.25"
+time = "0.3.36"
 tokio = "1.39.3"
 tokio-tungstenite = "0.23.1"
 tokio-util = "0.7.11"
-tower = "0.4"
+tower = "0.5"
 tower-http = "0.5.2"
 tracing = "0.1"
 tracing-error = "0.2.0"
 tracing-subscriber = "0.3"
-wasm-bindgen = "=0.2.92"
+wasm-bindgen = "=0.2.93"
 web-sys = "0.3"
 youtube_dl = { version = "0.10.0", features = [
     "downloader-rustls-tls",
