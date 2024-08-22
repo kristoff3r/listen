@@ -105,7 +105,11 @@
 
           leptosfmt
           diesel-cli
-          wasm-bindgen-cli
+          (wasm-bindgen-cli.override {
+            version = "0.2.93";
+            hash = "sha256-DDdu5mM3gneraM85pAepBXWn3TMofarVR4NbjMdz3r0=";
+            cargoHash = "sha256-birrg+XABBHHKJxfTKAMSlmTVYLmnmqMDfRnmG6g/YQ=";
+          })
 
           yt-dlp
           ffmpeg
