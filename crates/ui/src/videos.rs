@@ -5,13 +5,13 @@ use leptos::*;
 pub fn VideosPage() -> impl IntoView {
     let action = create_server_action::<GetVideos>();
     let videos = create_resource(move || action.version().get(), |_| get_videos());
-    let (active, set_active) = create_signal::<Option<i32>>(None);
+    let selected = create_rw_signal::<Option<i32>>(None);
 
     view! {
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <div class="flex w-full min-h-screen">
-                <div class="flex items-center justify-center w-[80%] bg-red-400">
-                    {move || match active.get() {
+                <div class="flex items-center justify-center w-[80%] bg-black text-gray-400">
+                    {move || match selected.get() {
                         Some(id) => view! { <EmbedLocal id=id/> }.into_view(),
                         None => view! { <p>"Select a video"</p> }.into_view(),
                     }}
@@ -19,7 +19,7 @@ pub fn VideosPage() -> impl IntoView {
                 </div>
                 <div class="w-[20%] bg-blue-400">
                     {move || match videos.get() {
-                        Some(Ok(videos)) => view! { <VideoList videos set_active/> }.into_view(),
+                        Some(Ok(videos)) => view! { <VideoList videos selected/> }.into_view(),
                         Some(Err(e)) => view! { {format!("error loading video: {e}").into_view()} },
                         _ => view! { <p>"Loading..."</p> }.into_view(),
                     }}
@@ -32,27 +32,32 @@ pub fn VideosPage() -> impl IntoView {
 }
 
 #[component]
-pub fn video_list(videos: Vec<Video>, set_active: WriteSignal<Option<i32>>) -> impl IntoView {
-    videos
+pub fn video_list(videos: Vec<Video>, selected: RwSignal<Option<i32>>) -> impl IntoView {
+    let entries = videos
         .into_iter()
-        .map(|video| view! { <VideoListEntry video set_active/> })
-        .collect_view()
+        .map(|video| view! { <VideoListEntry video selected/> })
+        .collect_view();
+    view! { <div class="flex flex-col gap-2">{entries}</div> }
 }
 
 #[component]
-pub fn video_list_entry(video: Video, set_active: WriteSignal<Option<i32>>) -> impl IntoView {
+pub fn video_list_entry(video: Video, selected: RwSignal<Option<i32>>) -> impl IntoView {
+    let is_selected = move || selected.get() == Some(video.id);
     view! {
-        <div>
+        <button
+            class=("bg-green-400", is_selected)
+            class="hover:bg-green-500"
+            on:click=move |_| selected.set(Some(video.id))
+        >
             {video.title}
-            <button on:click=move |_| set_active.set(Some(video.id))>{"select"}</button>
-        </div>
+        </button>
     }
 }
 
 #[component]
 pub fn embed_local(id: i32) -> impl IntoView {
     view! {
-        <video class="min-w-full min-h-full" controls>
+        <video class="h-full" controls>
             <source src=format!("/api/videos/{id}/play") type="video/mp4"/>
         </video>
     }
