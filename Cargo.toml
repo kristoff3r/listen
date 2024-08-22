@@ -5,7 +5,7 @@ package.edition = "2021"
 package.license = "MIT/Apache-2.0"
 package.version = "0.1.0"
 
-members = ["crates/database", "crates/frontend", "crates/server", "crates/ui"]
+members = ["crates/*"]
 
 [workspace.dependencies]
 anyhow = "1.0.86"
@@ -61,7 +61,7 @@ opt-level = 'z'
 panic = "abort"
 
 [[workspace.metadata.leptos]]
-bin-package = "server"
+bin-package = "backend"
 lib-package = "frontend"
 name = "listen"
 

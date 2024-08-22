@@ -57,9 +57,9 @@
 
           installPhaseCommand = ''
             mkdir -p $out/bin
-            cp target/release/server $out/bin/
+            cp target/release/backend $out/bin/
             cp -r target/site $out/bin/
-            wrapProgram $out/bin/server \
+            wrapProgram $out/bin/backend \
               --set LEPTOS_SITE_ROOT $out/bin/site
           '';
         };

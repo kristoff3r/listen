@@ -19,7 +19,7 @@ buildImage {
   };
 
   config = {
-    Entrypoint = [ "${listen-api}/bin/server" ];
+    Entrypoint = [ "${listen-api}/bin/backend" ];
     Env = [
       "RUST_LOG=info"
     ];
