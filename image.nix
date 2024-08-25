@@ -22,12 +22,13 @@ buildImage {
     Entrypoint = [ "${listen-api}/bin/backend" ];
     Env = [
       "RUST_LOG=info"
+      "RUST_BACKTRACE=1"
     ];
     ExposedPorts = {
       "3000" = {};
     };
     Volumes = {
-      "/listen" = {};
+      "/videos" = {};
     };
   };
 }

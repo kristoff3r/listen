@@ -38,6 +38,10 @@ with lib;
           POSTGRES_DB="listen";
         };
 
+        volumes = [
+          "/var/lib/listen/db:/var/lib/postgresql/data"
+        ];
+
         extraOptions = [
           "--pod" "listen"
         ];
@@ -48,10 +52,10 @@ with lib;
         environment = {
           RUST_LOG="info";
           DATABASE_URL="postgres://postgres:postgres@db/listen";
-          VIDEOS_DIR="/listen/videos";
+          VIDEOS_DIR="/videos";
         };
         volumes = [
-          "/var/lib/listen:/listen"
+          "/var/lib/listen/videos:/videos"
         ];
         extraOptions = [
           "--pod" "listen"
@@ -60,7 +64,7 @@ with lib;
     };
 
     system.activationScripts.makeListenDir = lib.stringAfter [ "var" ] ''
-        mkdir -p /var/lib/listen/videos
+        mkdir -p /var/lib/listen/{videos,db}
         ${pkgs.podman}/bin/podman pod exists listen || ${pkgs.podman}/bin/podman pod create -n listen -p '127.0.0.1:3000:3000'
     '';
 
