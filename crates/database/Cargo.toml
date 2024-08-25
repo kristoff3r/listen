@@ -6,9 +6,14 @@ version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-diesel = { workspace = true, features = ["postgres", "time"], optional = true }
+diesel = { workspace = true, features = [
+  "postgres",
+  "time",
+  "serde_json",
+], optional = true }
 diesel_async_migrations = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 time = { workspace = true, features = ["serde"] }
 
 [features]

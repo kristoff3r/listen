@@ -1,5 +1,8 @@
 use database::Video;
+use icondata as i;
 use leptos::*;
+use leptos_icons::Icon;
+use leptos_router::A;
 
 #[component]
 pub fn VideosPage() -> impl IntoView {
@@ -37,7 +40,16 @@ pub fn video_list(videos: Vec<Video>, selected: RwSignal<Option<i32>>) -> impl I
         .into_iter()
         .map(|video| view! { <VideoListEntry video selected/> })
         .collect_view();
-    view! { <div class="flex flex-col gap-2">{entries}</div> }
+    view! {
+        <div class="flex flex-col gap-2">
+            <div>
+                <A class="flex flex-row bg-slate-500 py-2 px-2" href="/downloads">
+                    <Icon icon=i::BsCloudArrowDown/>
+                </A>
+            </div>
+            {entries}
+        </div>
+    }
 }
 
 #[component]

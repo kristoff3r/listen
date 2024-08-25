@@ -111,7 +111,10 @@ fn routes() -> Router<AppState> {
         .route("/health_check", get(|| async { "" }))
         .route("/api/videos/:id", get(handlers::videos::get_video))
         .route("/api/videos/:id/play", get(handlers::videos::play_video))
-        .route("/api/download", post(handlers::download::download_url))
+        .route(
+            "/api/download",
+            post(handlers::download::add_to_download_queue),
+        )
         .leptos_routes_with_handler(generate_route_list(App), get(leptos_routes_handler))
         .fallback(file_and_error_handler)
         .layer(

@@ -1,3 +1,4 @@
+use downloads::DownloadsPage;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -8,6 +9,8 @@ use crate::error_template::{AppError, ErrorTemplate};
 pub mod api;
 pub mod error_template;
 
+pub mod downloads;
+pub mod loading;
 #[cfg(feature = "ssr")]
 pub mod state;
 pub mod videos;
@@ -48,6 +51,7 @@ pub fn App() -> impl IntoView {
                 }>
                     <Routes>
                         <Route path="/" view=VideosPage/>
+                        <Route path="/downloads" view=DownloadsPage/>
                     </Routes>
                 </ErrorBoundary>
             </main>

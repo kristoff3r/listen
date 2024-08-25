@@ -14,8 +14,10 @@ diesel-async = { workspace = true, features = [
 ], optional = true }
 gloo-net = { workspace = true, features = ["http"] }
 http.workspace = true
+icondata = "0.4.0"
 leptos.workspace = true
 leptos_axum = { workspace = true, optional = true }
+leptos_icons = { workspace = true }
 leptos_meta.workspace = true
 leptos_router.workspace = true
 log.workspace = true
