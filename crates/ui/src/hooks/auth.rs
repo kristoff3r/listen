@@ -4,6 +4,7 @@ use crate::client_state::use_auth_token;
 
 #[component]
 pub fn AuthRequired(children: ChildrenFn) -> impl IntoView {
+    let _ = children;
     let token = use_auth_token();
 
     create_effect(move |_| {

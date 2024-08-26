@@ -2,6 +2,7 @@ use leptos::{component, prelude::*, view, CollectView, ErrorBoundary, Errors, In
 use leptos_router::{Outlet, Route, Router, Routes};
 
 use crate::{
+    downloads::DownloadsPage,
     error_template::{AppError, ErrorTemplate},
     hooks::auth::AuthRequired,
     videos::VideosPage,
