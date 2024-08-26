@@ -13,6 +13,7 @@ diesel-async = { workspace = true, features = [
     "deadpool",
 ], optional = true }
 gloo-net = { workspace = true, features = ["http"] }
+gloo-storage.workspace = true
 http.workspace = true
 icondata = "0.4.0"
 leptos.workspace = true

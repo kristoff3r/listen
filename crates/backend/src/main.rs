@@ -21,7 +21,7 @@ use tower_http::{
 use tracing::{info, warn, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use ui::{
-    state::{AppState, VideosDir},
+    server_state::{ServerState, VideosDir},
     App,
 };
 
@@ -73,9 +73,8 @@ async fn main() -> anyhow::Result<()> {
 
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
-    // let addr = leptos_options.site_addr;
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
-    let state = AppState {
+    let state = ServerState {
         pool,
         leptos_options,
         videos_dir: VideosDir(
@@ -102,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn routes() -> Router<AppState> {
+fn routes() -> Router<ServerState> {
     Router::new()
         .route(
             "/api/leptos/*fn_name",
@@ -150,7 +149,7 @@ async fn shutdown_signal() {
 }
 
 async fn server_fn_handler(
-    State(app_state): State<AppState>,
+    State(app_state): State<ServerState>,
     path: Path<String>,
     request: Request<Body>,
 ) -> impl IntoResponse {
@@ -167,7 +166,7 @@ async fn server_fn_handler(
 }
 
 pub async fn leptos_routes_handler(
-    State(app_state): State<AppState>,
+    State(app_state): State<ServerState>,
     State(option): State<leptos::LeptosOptions>,
     request: Request<Body>,
 ) -> axum::response::Response {

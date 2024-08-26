@@ -97,7 +97,7 @@ pub async fn get_videos() -> Result<Vec<Video>, ServerFnError> {
     use diesel::prelude::*;
     use diesel_async::RunQueryDsl;
 
-    let pool = expect_context::<crate::state::AppState>().pool;
+    let pool = expect_context::<crate::server_state::ServerState>().pool;
     let mut conn = pool.get().await?;
 
     let videos = videos_table

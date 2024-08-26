@@ -7,7 +7,7 @@ use leptos::LeptosOptions;
 /// Derive FromRef to allow multiple items in state, using Axum’s
 /// SubStates pattern.
 #[derive(FromRef, Clone)]
-pub struct AppState {
+pub struct ServerState {
     pub leptos_options: LeptosOptions,
     pub pool: Pool<AsyncPgConnection>,
     pub videos_dir: VideosDir,

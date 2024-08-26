@@ -11,7 +11,7 @@ use diesel_async::RunQueryDsl;
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 use tracing::info;
-use ui::state::VideosDir;
+use ui::server_state::VideosDir;
 
 use crate::{error::Result, PgPool};
 

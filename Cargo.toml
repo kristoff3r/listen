@@ -23,6 +23,7 @@ dotenvy = "0.15.7"
 futures = "0.3"
 futures-util = { version = "0.3", default-features = false }
 gloo-net = "0.6.0"
+gloo-storage = "0.3.0"
 headers = "0.4.0"
 http = "1"
 leptos = "0.6"
