@@ -10,7 +10,7 @@ members = ["crates/*"]
 [workspace.dependencies]
 anyhow = "1.0.89"
 axum = "0.7.6"
-axum-extra = "0.9.3"
+axum-extra = "0.9.4"
 axum-test = "15.7.0"
 cfg-if = "1.0.0"
 console_error_panic_hook = "0.1"
