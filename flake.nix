@@ -42,6 +42,7 @@
             postgresql_16
           ];
           nativeBuildInputs = with pkgs; [
+            postgresql_16
             makeWrapper
             (callPackage ./cargo-leptos.nix {})
             binaryen

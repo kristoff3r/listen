@@ -18,6 +18,7 @@ pub struct Video {
     pub id: i32,
     pub title: String,
     pub youtube_id: Option<String>,
+    pub url: String,
     pub updated_at: OffsetDateTime,
     pub created_at: OffsetDateTime,
     pub metadata: Option<serde_json::Value>,
@@ -35,6 +36,20 @@ pub struct Download {
     pub id: i32,
     pub video_id: i32,
     pub error: Option<String>,
+    pub status: DownloadStatus,
     pub updated_at: OffsetDateTime,
     pub created_at: OffsetDateTime,
+}
+
+#[cfg_attr(feature = "diesel", derive(diesel_derive_enum::DbEnum))]
+#[cfg_attr(
+    feature = "diesel",
+    ExistingTypePath = "crate::schema::sql_types::DownloadStatus"
+)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum DownloadStatus {
+    Pending,
+    Processing,
+    Finished,
+    Failed,
 }
