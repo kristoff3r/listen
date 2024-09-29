@@ -87,6 +87,14 @@ async fn main() -> anyhow::Result<()> {
     info!("listening on {}", addr);
     info!("video dir: {}", state.videos_dir.display());
 
+    {
+        let videos_dir = state.videos_dir.clone();
+        let pool = state.pool.clone();
+        tokio::task::spawn(async move {
+            handlers::download::handle_download_queue(pool, videos_dir).await
+        });
+    }
+
     let app = routes().with_state(state);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
@@ -112,7 +120,7 @@ fn routes() -> Router<ServerState> {
         .route("/api/videos/:id/play", get(handlers::videos::play_video))
         .route(
             "/api/download",
-            post(handlers::download::add_to_download_queue),
+            post(handlers::download::add_video_to_queue),
         )
         .leptos_routes_with_handler(generate_route_list(App), get(leptos_routes_handler))
         .fallback(file_and_error_handler)

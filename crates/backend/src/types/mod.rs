@@ -1,3 +1,4 @@
+use database::DownloadStatus;
 use diesel::prelude::Insertable;
 use serde::Deserialize;
 
@@ -7,6 +8,8 @@ use serde::Deserialize;
 pub struct NewVideo<'a> {
     pub title: &'a str,
     pub youtube_id: Option<&'a str>,
+    pub url: &'a str,
+    pub file_path: Option<&'a str>,
     pub metadata: Option<serde_json::Value>,
 }
 
@@ -15,6 +18,7 @@ pub struct NewVideo<'a> {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewDownload<'a> {
     pub video_id: i32,
-    pub url: &'a str,
     pub error: Option<&'a str>,
+    pub retry_count: Option<i32>,
+    pub status: DownloadStatus,
 }

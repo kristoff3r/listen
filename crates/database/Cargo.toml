@@ -11,6 +11,9 @@ diesel = { workspace = true, features = [
   "time",
   "serde_json",
 ], optional = true }
+diesel-derive-enum = { workspace = true, features = [
+  "postgres",
+], optional = true }
 diesel_async_migrations = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -18,4 +21,4 @@ time = { workspace = true, features = ["serde"] }
 
 [features]
 default = []
-diesel = ["dep:diesel", "dep:diesel_async_migrations"]
+diesel = ["dep:diesel", "dep:diesel_async_migrations", "dep:diesel-derive-enum"]
