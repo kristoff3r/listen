@@ -1,4 +1,4 @@
-use leptos::{prelude::*, use_context};
+use leptos::*;
 use serde::{Deserialize, Serialize};
 
 const AUTH_TOKEN_KEY: &str = "auth_token";

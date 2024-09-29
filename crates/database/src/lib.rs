@@ -38,6 +38,7 @@ pub struct Download {
     pub error: Option<String>,
     pub status: DownloadStatus,
     pub retry_count: i32,
+    pub force: bool,
     pub updated_at: OffsetDateTime,
     pub created_at: OffsetDateTime,
 }

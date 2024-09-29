@@ -4,7 +4,11 @@ module.exports = {
     files: ["./crates/*/src/**/*.rs"],
   },
   theme: {
-    extend: {},
+    extend: {
+      gridTemplateColumns: {
+        'main': '50px 1fr',
+      },
+    },
   },
   plugins: [],
 }

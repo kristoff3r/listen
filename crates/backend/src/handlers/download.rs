@@ -7,7 +7,7 @@ use axum::{
     Json,
 };
 use database::{schema, Download, DownloadStatus, Video};
-use diesel::{insert_into, prelude::*};
+use diesel::{insert_into, prelude::*, update};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use serde::Deserialize;
 use tokio::process::Command;
@@ -99,38 +99,52 @@ pub async fn redownload_video(
 }
 
 pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Result<()> {
-    use database::schema::downloads::table as downloads_table;
-    use database::schema::videos::table as videos_table;
+    use database::schema::downloads::dsl as d;
+    use database::schema::videos::dsl as v;
 
     info!("Starting download queue handler");
 
     loop {
         let mut conn = pool.get().await?;
 
-        let rows = downloads_table
-            .inner_join(videos_table)
-            .filter(database::schema::downloads::status.eq(DownloadStatus::Pending))
-            .filter(database::schema::videos::url.is_not_null())
-            .order_by((
-                database::schema::downloads::retry_count.asc(),
-                database::schema::downloads::created_at.asc(),
-            ))
+        let rows = d::downloads
+            .inner_join(v::videos)
+            .filter(d::status.eq(DownloadStatus::Pending))
+            .filter(v::url.is_not_null())
+            .order_by((d::retry_count.asc(), d::created_at.asc()))
             .limit(1)
             .select((Download::as_select(), Video::as_select()))
             .load::<(Download, Video)>(&mut conn)
             .await?;
 
-        let Some((download, video)) = rows.into_iter().next() else {
+        let Some((cur_download, cur_video)) = rows.into_iter().next() else {
             tokio::time::sleep(Duration::from_secs(5)).await;
             continue;
         };
 
-        info!("Downloading video: {} {}", video.id, video.title);
         let videos_dir = videos_dir.clone();
+        let out_path = videos_dir.join(format!("{}.mp4", cur_video.id));
+        if out_path.exists() && !cur_download.force {
+            info!(
+                "Video {id} {title} already exists, skipping",
+                id = cur_video.id,
+                title = cur_video.title
+            );
+            update(d::downloads.filter(d::id.eq(cur_download.id)))
+                .set((
+                    d::retry_count.eq(cur_download.retry_count + 1),
+                    d::error.eq("video already exists"),
+                    d::status.eq(DownloadStatus::Finished),
+                ))
+                .execute(&mut conn)
+                .await?;
+            continue;
+        }
+
+        info!("Downloading video: {} {}", cur_video.id, cur_video.title);
         let res = tokio::task::spawn(async move {
             let tmp_dir = tempfile::tempdir_in(&*videos_dir)?;
-            let out_path = videos_dir.join(format!("{}.mp4", video.id));
-            download_file(video.url, tmp_dir.path(), &out_path).await?;
+            download_file(cur_video.url, tmp_dir.path(), &out_path).await?;
 
             Ok::<_, ListenError>(())
         })
@@ -139,35 +153,33 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
         if let Err(e) = res {
             warn!(
                 "Download {id} {title} failed: {e}",
-                id = video.id,
-                title = video.title
+                id = cur_video.id,
+                title = cur_video.title
             );
-            insert_into(downloads_table)
-                .values(NewDownload {
-                    video_id: video.id,
-                    error: Some(&format!("download failed: {e}")),
-                    retry_count: Some(download.retry_count + 1),
-                    status: if download.retry_count >= 3 {
-                        DownloadStatus::Failed
+            update(d::downloads.filter(d::id.eq(cur_download.id)))
+                .set((
+                    d::retry_count.eq(cur_download.retry_count + 1),
+                    d::error.eq(Some(&format!("download failed: {e}"))),
+                    if cur_download.retry_count >= 3 {
+                        d::status.eq(DownloadStatus::Failed)
                     } else {
-                        DownloadStatus::Pending
+                        d::status.eq(DownloadStatus::Pending)
                     },
-                })
+                ))
                 .execute(&mut conn)
                 .await?;
         } else {
             info!(
                 "Download {id} {title} finished",
-                id = video.id,
-                title = video.title
+                id = cur_video.id,
+                title = cur_video.title
             );
-            insert_into(downloads_table)
-                .values(NewDownload {
-                    video_id: video.id,
-                    error: None,
-                    retry_count: Some(download.retry_count + 1),
-                    status: DownloadStatus::Finished,
-                })
+            update(d::downloads.filter(d::id.eq(cur_download.id)))
+                .set((
+                    d::retry_count.eq(cur_download.retry_count + 1),
+                    d::error.eq(""),
+                    d::status.eq(DownloadStatus::Finished),
+                ))
                 .execute(&mut conn)
                 .await?;
         }

@@ -4,16 +4,17 @@ use leptos_meta::*;
 use routes::ListenRoutes;
 
 pub mod api;
-pub mod error_template;
-
 pub mod client_state;
 pub mod downloads;
+pub mod errors;
 mod hooks;
 pub mod loading;
+pub mod nav;
 mod routes;
 #[cfg(feature = "ssr")]
 pub mod server_state;
 pub mod videos;
+pub mod settings;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -27,8 +28,6 @@ pub fn App() -> impl IntoView {
         <Title text="Listen"/>
         <Link rel="icon" href="favicon.png" sizes="32x32"/>
 
-        <main class="my-0 mx-auto text-center justif">
-            <ListenRoutes/>
-        </main>
+        <ListenRoutes/>
     }
 }

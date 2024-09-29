@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::query_builder::QueryId, Debug, diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "download_status"))]
     pub struct DownloadStatus;
 }
@@ -16,6 +16,7 @@ diesel::table! {
         error -> Nullable<Text>,
         status -> DownloadStatus,
         retry_count -> Int4,
+        force -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -36,4 +37,7 @@ diesel::table! {
 
 diesel::joinable!(downloads -> videos (video_id));
 
-diesel::allow_tables_to_appear_in_same_query!(downloads, videos,);
+diesel::allow_tables_to_appear_in_same_query!(
+    downloads,
+    videos,
+);

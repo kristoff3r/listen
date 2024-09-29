@@ -1,8 +1,5 @@
 use database::Video;
-use icondata as i;
 use leptos::*;
-use leptos_icons::Icon;
-use leptos_router::A;
 
 #[component]
 pub fn VideosPage() -> impl IntoView {
@@ -13,14 +10,7 @@ pub fn VideosPage() -> impl IntoView {
     view! {
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <div class="flex w-full min-h-screen">
-                <div class="flex items-center justify-center w-[80%] bg-black text-gray-400">
-                    {move || match selected.get() {
-                        Some(id) => view! { <EmbedLocal id=id/> }.into_view(),
-                        None => view! { <p>"Select a video"</p> }.into_view(),
-                    }}
-
-                </div>
-                <div class="w-[20%] bg-blue-400">
+                <div class="w-[200px] bg-blue-400">
                     {move || match videos.get() {
                         Some(Ok(videos)) => view! { <VideoList videos selected/> }.into_view(),
                         Some(Err(e)) => view! { {format!("error loading video: {e}").into_view()} },
@@ -28,7 +18,13 @@ pub fn VideosPage() -> impl IntoView {
                     }}
 
                 </div>
+                <div class="flex flex-1 items-center justify-center w-fit bg-black text-gray-400">
+                    {move || match selected.get() {
+                        Some(id) => view! { <EmbedLocal id=id/> }.into_view(),
+                        None => view! { <p>"Select a video"</p> }.into_view(),
+                    }}
 
+                </div>
             </div>
         </Transition>
     }
@@ -40,16 +36,7 @@ pub fn video_list(videos: Vec<Video>, selected: RwSignal<Option<i32>>) -> impl I
         .into_iter()
         .map(|video| view! { <VideoListEntry video selected/> })
         .collect_view();
-    view! {
-        <div class="flex flex-col gap-2">
-            <div>
-                <A class="flex flex-row bg-slate-500 py-2 px-2" href="/downloads">
-                    <Icon icon=i::BsCloudArrowDown/>
-                </A>
-            </div>
-            {entries}
-        </div>
-    }
+    view! { <div class="flex flex-col gap-2">{entries}</div> }
 }
 
 #[component]

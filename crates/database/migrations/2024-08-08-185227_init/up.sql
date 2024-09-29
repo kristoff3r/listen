@@ -18,6 +18,7 @@ CREATE TABLE downloads (
     error text,
     status download_status NOT NULL default 'pending',
     retry_count integer NOT NULL default 0,
+    force boolean NOT NULL default false,
 
     created_at timestamptz NOT NULL default now(),
     updated_at timestamptz NOT NULL default now(),
