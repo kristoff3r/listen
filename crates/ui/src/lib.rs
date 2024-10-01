@@ -13,8 +13,8 @@ pub mod nav;
 mod routes;
 #[cfg(feature = "ssr")]
 pub mod server_state;
-pub mod videos;
 pub mod settings;
+pub mod videos;
 
 #[component]
 pub fn App() -> impl IntoView {
