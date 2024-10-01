@@ -33,5 +33,5 @@ tracing.workspace = true
 youtube_dl.workspace = true
 
 database = { path = "../database", features = ["diesel"] }
-tempfile = "3.12.0"
+tempfile = "3.13.0"
 ui = { path = "../ui", default-features = false, features = ["ssr"] }
