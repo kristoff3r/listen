@@ -33,7 +33,7 @@ leptos_icons = "0.3"
 leptos_meta = "0.6"
 leptos_router = "0.6"
 log = "0.4.22"
-reqwest = { version = "0.12.7", default-features = false, features = [
+reqwest = { version = "0.12.8", default-features = false, features = [
     "rustls-tls",
 ] }
 serde = "1.0"
