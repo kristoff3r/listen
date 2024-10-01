@@ -9,7 +9,7 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 anyhow = "1.0.89"
-axum = "0.7.6"
+axum = "0.7.7"
 axum-extra = "0.9.4"
 axum-test = "15.7.4"
 cfg-if = "1.0.0"
