@@ -8,7 +8,7 @@ package.version = "0.1.0"
 members = ["crates/*"]
 
 [workspace.dependencies]
-anyhow = "1.0.90"
+anyhow = "1.0.91"
 axum = "0.7.7"
 axum-extra = "0.9.4"
 axum-test = "15.7.4"
