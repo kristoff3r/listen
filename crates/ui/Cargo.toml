@@ -27,7 +27,7 @@ serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
 web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
 
-database = { path = "../database" }
+database = { path = "../database", optional = true }
 
 [features]
 default = []
@@ -40,5 +40,5 @@ ssr = [
     "dep:diesel",
     "dep:diesel-async",
     "dep:leptos_axum",
-    "database/diesel",
+    "dep:database",
 ]

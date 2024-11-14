@@ -13,8 +13,8 @@ deadpool = { workspace = true, features = ["rt_tokio_1"] }
 diesel = { workspace = true, features = ["postgres", "time"] }
 diesel-async = { workspace = true, features = ["postgres", "deadpool"] }
 dotenvy.workspace = true
-futures-util = { workspace = true, features = ["sink", "std"] }
 futures.workspace = true
+futures-util = { workspace = true, features = ["sink", "std"] }
 headers.workspace = true
 leptos = { workspace = true, features = ["ssr"] }
 leptos_axum.workspace = true
@@ -27,11 +27,11 @@ tokio-tungstenite.workspace = true
 tokio-util.workspace = true
 tower = { workspace = true, features = ["util"] }
 tower-http = { workspace = true, features = ["fs", "trace", "timeout"] }
+tracing.workspace = true
 tracing-error.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
-tracing.workspace = true
 youtube_dl.workspace = true
 
-database = { path = "../database", features = ["diesel"] }
+database = { path = "../database" }
 tempfile = "3.14.0"
 ui = { path = "../ui", default-features = false, features = ["ssr"] }

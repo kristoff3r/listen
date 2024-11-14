@@ -10,15 +10,15 @@ diesel = { workspace = true, features = [
   "postgres",
   "time",
   "serde_json",
-], optional = true }
-diesel-derive-enum = { workspace = true, features = [
-  "postgres",
-], optional = true }
-diesel_async_migrations = { workspace = true, optional = true }
+  "uuid",
+  "chrono",
+] }
+diesel-async = { workspace = true, features = ["postgres"] }
+diesel-derive-enum = { workspace = true, features = ["postgres"] }
+diesel_async_migrations.workspace = true
+openidconnect = "3.5.0"
+rand = "0.8.5"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 time = { workspace = true, features = ["serde"] }
-
-[features]
-default = []
-diesel = ["dep:diesel", "dep:diesel_async_migrations", "dep:diesel-derive-enum"]
+uuid = { version = "1.11.0", features = ["serde"] }
