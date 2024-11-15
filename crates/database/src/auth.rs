@@ -167,7 +167,10 @@ impl User {
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set(u::handle.eq(handle))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::handle.eq(handle),
+            ))
             .execute(conn)
             .await?;
 
@@ -183,7 +186,10 @@ impl User {
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set(u::email.eq(email))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::email.eq(email),
+            ))
             .execute(conn)
             .await?;
 
@@ -199,7 +205,10 @@ impl User {
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set(u::is_approved.eq(is_approved))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::is_approved.eq(is_approved),
+            ))
             .execute(conn)
             .await?;
 
@@ -215,7 +224,46 @@ impl User {
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set(u::is_admin.eq(is_admin))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::is_admin.eq(is_admin),
+            ))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_last_activity(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::last_activity.eq(OffsetDateTime::now_utc()),
+            ))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_last_login(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::last_login.eq(OffsetDateTime::now_utc()),
+            ))
             .execute(conn)
             .await?;
 
@@ -350,6 +398,7 @@ impl UserSession {
         update(s::user_sessions)
             .filter(s::user_session_id.eq(user_session_id))
             .set((
+                s::updated_at.eq(OffsetDateTime::now_utc()),
                 s::user_id.eq(user_id),
                 s::oidc_issuer_url.eq(None::<String>),
                 s::csrf_token.eq(None::<String>),
