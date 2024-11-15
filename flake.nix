@@ -44,7 +44,7 @@
           nativeBuildInputs = with pkgs; [
             postgresql_16
             makeWrapper
-            (callPackage ./cargo-leptos.nix {})
+            ourCargoLeptos
             binaryen
             tailwindcss
           ];
@@ -82,6 +82,21 @@
         inherit (pkgs.dockerTools) buildImage;
         inherit listen-api;
       };
+
+      # Version overrides
+      rustPlatform = pkgs.makeRustPlatform {
+        cargo = rustToolchain;
+        rustc = rustToolchain;
+      };
+      ourLeptosfmt = pkgs.callPackage ./nix/leptosfmt.nix { inherit rustPlatform; };
+      ourCargoLeptos = pkgs.callPackage ./nix/cargo-leptos.nix { inherit rustPlatform; };
+      ourWasmBindgen = pkgs.wasm-bindgen-cli.override {
+        inherit rustPlatform;
+        version = "0.2.95";
+        hash = "sha256-prMIreQeAcbJ8/g3+pMp1Wp9H5u+xLqxRxL+34hICss=";
+        cargoHash = "sha256-6iMebkD7FQvixlmghGGIvpdGwFNLfnUcFke/Rg8nPK4=";
+      };
+      ourDieselCli = pkgs.callPackage ./nix/diesel-cli.nix { inherit rustPlatform; };
     in
     {
       nixosModules.default = import ./module.nix { inherit listen-api-image; };
@@ -89,6 +104,7 @@
       packages.${system} = {
         inherit listen-api;
         image = listen-api-image;
+        leptosfmt = ourLeptosfmt;
       };
 
       checks.${system} = {
@@ -104,13 +120,9 @@
           bashInteractive
           devenv
 
-          leptosfmt
-          diesel-cli
-          (wasm-bindgen-cli.override {
-            version = "0.2.93";
-            hash = "sha256-DDdu5mM3gneraM85pAepBXWn3TMofarVR4NbjMdz3r0=";
-            cargoHash = "sha256-birrg+XABBHHKJxfTKAMSlmTVYLmnmqMDfRnmG6g/YQ=";
-          })
+          ourLeptosfmt
+          ourWasmBindgen
+          ourDieselCli
 
           yt-dlp
           ffmpeg

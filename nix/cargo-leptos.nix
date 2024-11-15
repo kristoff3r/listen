@@ -10,20 +10,20 @@ let
     SystemConfiguration
     Security;
   inherit (lib) optionals;
-  inherit (stdenv) isDarwin;
+  inherit (stdenv.hostPlatform) isDarwin;
 in
 rustPlatform.buildRustPackage rec {
   pname = "cargo-leptos";
-  version = "0.2.19";
+  version = "0.2.21";
 
   src = fetchFromGitHub {
     owner = "leptos-rs";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-hQ1mGhLPYK4P2qbag/CSpHje7p+MLKwrij1Fti035WU=";
+    hash = "sha256-Oe65m9io7ihymUjylaWHQM/x7r0y/xXqD313H3oyjN8=";
   };
 
-  cargoHash = "sha256-c3BwoCdxwETwDv8sZoSihxzO3J9IbLNAgtkYgHosUI0=";
+  cargoHash = "sha256-wZNtEr6IAy+OABpTm93rOhKAP1NEEYUvokjaVdoaSG4=";
 
   buildInputs = optionals isDarwin [
     SystemConfiguration

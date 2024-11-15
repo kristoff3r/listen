@@ -1,22 +1,22 @@
-use leptos::*;
+use leptos::{either::EitherOf3, prelude::*};
 
 use crate::loading::Loading;
 
 #[component]
 pub fn DownloadsPage() -> impl IntoView {
-    let action = create_server_action::<GetDownloads>();
-    let downloads = create_resource(move || action.version().get(), |_| get_downloads());
+    let action = ServerAction::<GetDownloads>::new();
+    let downloads = Resource::new(move || action.version().get(), |_| get_downloads());
 
     view! {
         <Transition fallback=move || view! { <Loading/> }>
             <div class="flex w-full min-h-screen">
                 <div class="w-[20%] bg-blue-400">
                     {move || match downloads.get() {
-                        Some(Ok(downloads)) => view! { <DownloadList downloads/> }.into_view(),
+                        Some(Ok(downloads)) => EitherOf3::A(view! { <DownloadList downloads/> }),
                         Some(Err(e)) => {
-                            view! { {format!("error loading: {e}").into_view()} }
+                            EitherOf3::B(view! { {format!("error loading: {e}").into_view()} })
                         }
-                        _ => view! { <Loading/> }.into_view(),
+                        _ => EitherOf3::C(view! { <Loading/> }),
                     }}
 
                 </div>

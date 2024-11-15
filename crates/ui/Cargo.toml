@@ -18,10 +18,10 @@ diesel-async = { workspace = true, features = [
 gloo-net = { workspace = true, features = ["http"] }
 gloo-storage.workspace = true
 http.workspace = true
-icondata = "0.4.0"
+icondata.workspace = true
 leptos.workspace = true
 leptos_axum = { workspace = true, optional = true }
-leptos_icons = { workspace = true }
+# leptos_icons.workspace = true
 leptos_meta.workspace = true
 leptos_router.workspace = true
 log.workspace = true
@@ -32,10 +32,9 @@ web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+hydrate = ["leptos/hydrate"]
 ssr = [
     "leptos/ssr",
-    "leptos_meta/ssr",
     "leptos_router/ssr",
     "dep:axum",
     "dep:diesel",

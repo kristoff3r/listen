@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 const AUTH_TOKEN_KEY: &str = "auth_token";
@@ -83,12 +83,12 @@ impl AuthState {
     pub fn load_from_storage() -> Self {
         if let Some(auth_token) = get_local_storage(AUTH_TOKEN_KEY) {
             if let Some(roles) = get_local_storage(ROLES_KEY) {
-                return Self(create_rw_signal((Some(auth_token), roles)));
+                return Self(RwSignal::new((Some(auth_token), roles)));
             }
         }
 
         Self::clear_storage();
-        Self(create_rw_signal((None, Vec::new())))
+        Self(RwSignal::new((None, Vec::new())))
     }
 
     fn clear_storage() {

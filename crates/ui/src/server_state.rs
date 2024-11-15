@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use axum::extract::FromRef;
 use diesel_async::{pooled_connection::deadpool::Pool, AsyncPgConnection};
-use leptos::LeptosOptions;
+use leptos::config::LeptosOptions;
 
 /// Derive FromRef to allow multiple items in state, using Axum’s
 /// SubStates pattern.

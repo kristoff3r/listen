@@ -1,27 +1,27 @@
 use api::Video;
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn VideosPage() -> impl IntoView {
-    let action = create_server_action::<GetVideos>();
-    let videos = create_resource(move || action.version().get(), |_| get_videos());
-    let selected = create_rw_signal::<Option<i32>>(None);
+    let action = ServerAction::<GetVideos>::new();
+    let videos = Resource::new(move || action.version().get(), |_| get_videos());
+    let selected = RwSignal::new(None);
 
     view! {
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <div class="flex w-full min-h-screen">
                 <div class="w-[200px] bg-blue-400">
                     {move || match videos.get() {
-                        Some(Ok(videos)) => view! { <VideoList videos selected/> }.into_view(),
-                        Some(Err(e)) => view! { {format!("error loading video: {e}").into_view()} },
-                        _ => view! { <p>"Loading..."</p> }.into_view(),
+                        Some(Ok(videos)) => view! { <VideoList videos selected/> }.into_any(),
+                        Some(Err(e)) => view! { {format!("error loading video: {e}").into_any()} },
+                        _ => view! { <p>"Loading..."</p> }.into_any(),
                     }}
 
                 </div>
                 <div class="flex flex-1 items-center justify-center w-fit bg-black text-gray-400">
                     {move || match selected.get() {
-                        Some(id) => view! { <EmbedLocal id=id/> }.into_view(),
-                        None => view! { <p>"Select a video"</p> }.into_view(),
+                        Some(id) => view! { <EmbedLocal id=id/> }.into_any(),
+                        None => view! { <p>"Select a video"</p> }.into_any(),
                     }}
 
                 </div>
@@ -70,7 +70,7 @@ pub fn embed_youtube(youtube_id: String) -> impl IntoView {
             height="315"
             src=format!("https://www.youtube.com/embed/{youtube_id}")
             title="YouTube video player"
-            frameborder="0"
+            // frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerpolicy="strict-origin-when-cross-origin"
             allowfullscreen

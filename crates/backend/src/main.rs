@@ -10,7 +10,7 @@ use axum::{
 };
 use database::MIGRATIONS;
 use fileserv::file_and_error_handler;
-use leptos::{logging::log, *};
+use leptos::{logging::log, prelude::*};
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tokio::signal;
 use tower::ServiceBuilder;
@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
         info!("Finished running migrations");
     }
 
-    let conf = get_configuration(None).await.unwrap();
+    let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
     let state = ServerState {
@@ -174,16 +174,15 @@ async fn server_fn_handler(
 
 pub async fn leptos_routes_handler(
     State(app_state): State<ServerState>,
-    State(option): State<leptos::LeptosOptions>,
+    State(options): State<LeptosOptions>,
     request: Request<Body>,
 ) -> axum::response::Response {
     let handler = leptos_axum::render_app_async_with_context(
-        option.clone(),
         move || {
             provide_context(app_state.clone());
             provide_context(app_state.pool.clone());
         },
-        move || view! { <App/> },
+        move || ui::shell(options.clone()),
     );
 
     handler(request).await.into_response()

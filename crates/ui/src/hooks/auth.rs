@@ -1,4 +1,4 @@
-use leptos::{component, create_effect, prelude::*, view, ChildrenFn, IntoView, Show};
+use leptos::prelude::*;
 
 use crate::client_state::use_auth_token;
 
@@ -7,7 +7,7 @@ pub fn AuthRequired(children: ChildrenFn) -> impl IntoView {
     let _ = children;
     let token = use_auth_token();
 
-    create_effect(move |_| {
+    Effect::new(move |_| {
         log::info!("Got token update: {:?}", token.get());
     });
 
