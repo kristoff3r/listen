@@ -7,8 +7,8 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL,
     handle VARCHAR(255) NOT NULL,
     profile_picture_url TEXT NOT NULL,
-    is_approved BOOLEAN NOT NULL,
-    is_admin BOOLEAN NOT NULL,
+    is_approved BOOLEAN NOT NULL DEFAULT false,
+    is_admin BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT email_unique UNIQUE(email),
     CONSTRAINT handle_unique UNIQUE(handle)

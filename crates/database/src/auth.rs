@@ -1,5 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable, SelectableHelper};
-use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use diesel_async::{
+    scoped_futures::ScopedFutureExt, AsyncConnection, AsyncPgConnection, RunQueryDsl,
+};
 use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -36,8 +38,6 @@ pub struct NewUser<'a> {
     pub email: &'a str,
     pub handle: &'a str,
     pub profile_picture_url: &'a str,
-    pub is_approved: bool,
-    pub is_admin: bool,
 }
 
 #[derive(Queryable, Selectable, Identifiable)]
@@ -102,21 +102,37 @@ impl User {
         handle: &str,
         email: &str,
         profile_picture_url: &str,
-    ) -> anyhow::Result<Self> {
-        use crate::schema::users::dsl as u;
+        oidc_issuer_url: &str,
+        oidc_issuer_id: &str,
+    ) -> anyhow::Result<(Self, OidcMapping)> {
+        conn.transaction::<_, _, _>(|conn| {
+            async move {
+                use crate::schema::oidc_mapping::dsl as m;
+                use crate::schema::users::dsl as u;
 
-        let result = insert_into(u::users)
-            .values(NewUser {
-                handle,
-                email,
-                profile_picture_url,
-                is_approved: false,
-                is_admin: false,
-            })
-            .get_result(conn)
-            .await?;
+                let user: User = insert_into(u::users)
+                    .values(NewUser {
+                        handle,
+                        email,
+                        profile_picture_url,
+                    })
+                    .get_result(conn)
+                    .await?;
 
-        Ok(result)
+                let oidc_mapping = insert_into(m::oidc_mapping)
+                    .values(NewOidcMapping {
+                        user_id: user.user_id,
+                        oidc_issuer_url,
+                        oidc_issuer_id,
+                    })
+                    .get_result(conn)
+                    .await?;
+
+                Ok((user, oidc_mapping))
+            }
+            .scope_boxed()
+        })
+        .await
     }
 
     pub async fn get_by_id(conn: &mut AsyncPgConnection, user_id: UserId) -> anyhow::Result<Self> {
@@ -189,6 +205,25 @@ impl User {
             .set((
                 u::updated_at.eq(OffsetDateTime::now_utc()),
                 u::email.eq(email),
+            ))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_profile_picture_url(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+        profile_picture_url: &str,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set((
+                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::profile_picture_url.eq(profile_picture_url),
             ))
             .execute(conn)
             .await?;
