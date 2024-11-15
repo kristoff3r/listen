@@ -1,0 +1,17 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "typed-uuid"
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["diesel"]
+diesel = ["dep:diesel"]
+
+[dependencies]
+diesel = { workspace = true, optional = true }
+serde.workspace = true
+uuid.workspace = true

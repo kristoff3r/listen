@@ -6,19 +6,13 @@ version.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-diesel = { workspace = true, features = [
-  "postgres",
-  "time",
-  "serde_json",
-  "uuid",
-  "chrono",
-] }
+diesel.workspace = true
 diesel-async = { workspace = true, features = ["postgres"] }
 diesel-derive-enum = { workspace = true, features = ["postgres"] }
 diesel_async_migrations.workspace = true
-openidconnect = "3.5.0"
-rand = "0.8.5"
+openidconnect.workspace = true
+rand.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 time = { workspace = true, features = ["serde"] }
-uuid = { version = "1.11.0", features = ["serde"] }
+typed-uuid = { path = "../typed-uuid", features = ["diesel"] }

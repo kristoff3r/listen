@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use diesel::{
     delete, insert_into, prelude::*, update, upsert::excluded, QueryDsl, Selectable,
     SelectableHelper,
@@ -9,71 +7,10 @@ use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
-struct Uuid<T> {
-    uuid: uuid::Uuid,
-    marker: PhantomData<T>,
-}
+use typed_uuid::Uuid;
 
-impl<T> std::fmt::Debug for Uuid<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.uuid.fmt(f)
-    }
-}
-
-impl<T> std::hash::Hash for Uuid<T> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.uuid.hash(state);
-    }
-}
-
-impl<T> std::cmp::Eq for Uuid<T> {}
-impl<T> std::cmp::PartialEq for Uuid<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.uuid == other.uuid
-    }
-}
-impl<T> Clone for Uuid<T> {
-    fn clone(&self) -> Self {
-        Self {
-            uuid: self.uuid.clone(),
-            marker: PhantomData,
-        }
-    }
-}
-
-impl<T> serde::Serialize for Uuid<T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.uuid.serialize(serializer)
-    }
-}
-
-impl<'de, T> serde::Deserialize<'de> for Uuid<T> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self {
-            uuid: uuid::Uuid::deserialize(deserializer)?,
-            marker: PhantomData,
-        })
-    }
-}
-
-impl<T> std::ops::Deref for Uuid<T> {
-    type Target = uuid::Uuid;
-
-    fn deref(&self) -> &Self::Target {
-        &self.uuid
-    }
-}
-
-// pub type UserId = Uuid<User>;
-
-pub type UserId = uuid::Uuid;
-pub type UserSessionId = uuid::Uuid;
+pub type UserId = Uuid<User>;
+pub type UserSessionId = Uuid<UserSession>;
 
 #[derive(Queryable, Selectable, Identifiable)]
 #[diesel(primary_key(user_id))]

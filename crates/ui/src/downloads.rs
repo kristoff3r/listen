@@ -1,3 +1,4 @@
+#[cfg(feature = "ssr")]
 use database::{Download, Video};
 use leptos::*;
 
