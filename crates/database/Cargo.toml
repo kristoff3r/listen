@@ -5,14 +5,16 @@ name = "database"
 version.workspace = true
 
 [dependencies]
+api = { path = "../api" }
+typed-uuid = { path = "../typed-uuid", features = ["diesel"] }
+
 anyhow.workspace = true
-diesel.workspace = true
 diesel-async = { workspace = true, features = ["postgres"] }
 diesel-derive-enum = { workspace = true, features = ["postgres"] }
+diesel.workspace = true
 diesel_async_migrations.workspace = true
 openidconnect.workspace = true
 rand.workspace = true
-serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+structural-convert = "0.13"
 time = { workspace = true, features = ["serde"] }
-typed-uuid = { path = "../typed-uuid", features = ["diesel"] }

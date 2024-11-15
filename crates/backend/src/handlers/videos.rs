@@ -5,7 +5,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use database::Video;
+use database::models::videos::Video;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tokio::fs::File;
@@ -15,7 +15,10 @@ use ui::server_state::VideosDir;
 
 use crate::{error::Result, PgPool};
 
-pub async fn get_video(State(pool): State<PgPool>, Path(id): Path<i32>) -> Result<Json<Video>> {
+pub async fn get_video(
+    State(pool): State<PgPool>,
+    Path(id): Path<i32>,
+) -> Result<Json<api::Video>> {
     use database::schema::videos::table as video_table;
     let mut conn = pool.get().await?;
 
@@ -25,7 +28,7 @@ pub async fn get_video(State(pool): State<PgPool>, Path(id): Path<i32>) -> Resul
         .first(&mut conn)
         .await?;
 
-    Ok(Json(res))
+    Ok(Json(res.into()))
 }
 
 pub async fn play_video(

@@ -6,7 +6,13 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use database::{schema, Download, DownloadStatus, Video};
+use database::{
+    models::{
+        downloads::{Download, DownloadStatus, NewDownload},
+        videos::{NewVideo, Video},
+    },
+    schema,
+};
 use diesel::{insert_into, prelude::*, update};
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
 use serde::Deserialize;
@@ -17,7 +23,6 @@ use youtube_dl::YoutubeDl;
 
 use crate::{
     error::{ListenError, Result},
-    types::{NewDownload, NewVideo},
     PgPool,
 };
 

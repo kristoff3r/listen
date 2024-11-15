@@ -1,0 +1,10 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "api"
+version.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+time = { workspace = true, features = ["serde"] }

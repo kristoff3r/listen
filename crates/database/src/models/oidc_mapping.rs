@@ -1,6 +1,5 @@
 use diesel::{delete, insert_into, prelude::*, QueryDsl};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
-use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use typed_uuid::Uuid;
 
@@ -12,7 +11,7 @@ pub type OidcMappingId = Uuid<OidcMapping>;
 #[diesel(primary_key(oidc_mapping_id))]
 #[diesel(table_name = crate::schema::oidc_mapping)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct OidcMapping {
     pub oidc_mapping_id: OidcMappingId,
     pub created_at: OffsetDateTime,
@@ -25,7 +24,7 @@ pub struct OidcMapping {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::oidc_mapping)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 struct NewOidcMapping<'a> {
     pub oidc_issuer_url: &'a str,
     pub oidc_issuer_id: &'a str,

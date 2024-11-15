@@ -69,6 +69,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "api"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "time",
+]
+
+[[package]]
 name = "async-recursion"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -259,6 +268,7 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "api",
  "axum",
  "axum-extra",
  "axum-test",
@@ -727,14 +737,15 @@ name = "database"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "api",
  "diesel",
  "diesel-async",
  "diesel-derive-enum",
  "diesel_async_migrations",
  "openidconnect",
  "rand",
- "serde",
  "serde_json",
+ "structural-convert",
  "time",
  "typed-uuid",
 ]
@@ -3658,6 +3669,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
+name = "structural-convert"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7c8b1faa3959a2aa326258e7ce07e28e0342f0c17d1d6ad092ddaa7057219d6"
+dependencies = [
+ "structural-convert-derive",
+]
+
+[[package]]
+name = "structural-convert-derive"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a5b3e4f58827163c8e46f249d87f48e508ffedd04cf4f03f2cbf115761c9d99"
+dependencies = [
+ "darling 0.14.4",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "strum"
 version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4185,6 +4217,7 @@ checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 name = "ui"
 version = "0.1.0"
 dependencies = [
+ "api",
  "axum",
  "cfg-if",
  "database",

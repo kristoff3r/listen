@@ -1,4 +1,4 @@
-use database::Video;
+use api::Video;
 use leptos::*;
 
 #[component]
@@ -88,9 +88,9 @@ pub async fn get_videos() -> Result<Vec<Video>, ServerFnError> {
     let mut conn = pool.get().await?;
 
     let videos = videos_table
-        .select(Video::as_select())
+        .select(database::models::videos::Video::as_select())
         .get_results(&mut conn)
         .await?;
 
-    Ok(videos)
+    Ok(videos.into_iter().map(Into::into).collect())
 }

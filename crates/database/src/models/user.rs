@@ -2,7 +2,6 @@ use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable, Sele
 use diesel_async::{
     scoped_futures::ScopedFutureExt, AsyncConnection, AsyncPgConnection, RunQueryDsl,
 };
-use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use typed_uuid::Uuid;
 
@@ -14,7 +13,7 @@ pub type UserId = Uuid<User>;
 #[diesel(primary_key(user_id))]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct User {
     pub user_id: UserId,
     pub created_at: OffsetDateTime,
@@ -31,7 +30,7 @@ pub struct User {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 struct NewUser<'a> {
     pub email: &'a str,
     pub handle: &'a str,

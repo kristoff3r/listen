@@ -1,5 +1,3 @@
-#[cfg(feature = "ssr")]
-use database::{Download, Video};
 use leptos::*;
 
 use crate::loading::Loading;
@@ -37,7 +35,7 @@ pub fn download_list(downloads: GetDownloadsResult) -> impl IntoView {
 }
 
 #[component]
-pub fn download_list_entry(video: Video, downloads: Vec<Download>) -> impl IntoView {
+pub fn download_list_entry(video: api::Video, downloads: Vec<api::Download>) -> impl IntoView {
     view! {
         <div class="hover:bg-green-500">
             {video.title}
@@ -51,10 +49,12 @@ pub fn download_list_entry(video: Video, downloads: Vec<Download>) -> impl IntoV
     }
 }
 
-type GetDownloadsResult = Vec<(Video, Vec<Download>)>;
+type GetDownloadsResult = Vec<(api::Video, Vec<api::Download>)>;
 
 #[server(GetDownloads, "/api/leptos")]
 pub async fn get_downloads() -> Result<GetDownloadsResult, ServerFnError> {
+    use database::models::downloads::Download;
+    use database::models::videos::Video;
     use database::schema::videos::table as videos_table;
     use diesel::prelude::*;
     use diesel_async::RunQueryDsl;
@@ -76,8 +76,13 @@ pub async fn get_downloads() -> Result<GetDownloadsResult, ServerFnError> {
         .grouped_by(&videos)
         .into_iter()
         .zip(videos)
-        .map(|(download, video)| (video, download))
-        .collect::<Vec<(Video, Vec<Download>)>>();
+        .map(|(downloads, video)| {
+            (
+                video.into(),
+                downloads.into_iter().map(Into::into).collect(),
+            )
+        })
+        .collect::<Vec<(api::Video, Vec<api::Download>)>>();
 
     Ok(res)
 }

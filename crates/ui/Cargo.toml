@@ -5,6 +5,9 @@ name = "ui"
 version.workspace = true
 
 [dependencies]
+api = { path = "../api" }
+database = { path = "../database", optional = true }
+
 axum = { workspace = true, optional = true }
 cfg-if.workspace = true
 diesel = { workspace = true, features = ["postgres", "time"], optional = true }
@@ -26,8 +29,6 @@ reqwest = { workspace = true, default-features = false, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
 web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
-
-database = { path = "../database", optional = true }
 
 [features]
 default = []

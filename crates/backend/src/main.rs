@@ -31,7 +31,6 @@ pub mod db;
 pub mod error;
 pub mod fileserv;
 pub mod handlers;
-pub mod types;
 pub mod ws;
 
 pub use db::PgPool;

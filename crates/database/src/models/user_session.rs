@@ -1,7 +1,6 @@
 use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
-use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use typed_uuid::Uuid;
 
@@ -13,7 +12,7 @@ pub type UserSessionId = Uuid<UserSession>;
 #[diesel(primary_key(user_session_id))]
 #[diesel(table_name = crate::schema::user_sessions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct UserSession {
     pub user_session_id: UserSessionId,
     pub created_at: OffsetDateTime,
@@ -33,7 +32,7 @@ pub struct UserSession {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::user_sessions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 struct NewUserSession<'a> {
     pub oidc_issuer_url: &'a str,
     pub csrf_token: &'a str,
