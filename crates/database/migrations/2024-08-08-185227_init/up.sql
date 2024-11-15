@@ -6,6 +6,7 @@ CREATE TABLE videos (
     url text NOT NULL,
     file_path text,
     metadata jsonb,
+
     created_at timestamptz NOT NULL default now(),
     updated_at timestamptz NOT NULL default now()
 );

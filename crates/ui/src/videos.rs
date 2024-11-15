@@ -80,17 +80,10 @@ pub fn embed_youtube(youtube_id: String) -> impl IntoView {
 
 #[server(GetVideos, "/api/leptos")]
 pub async fn get_videos() -> Result<Vec<Video>, ServerFnError> {
-    use database::schema::videos::table as videos_table;
-    use diesel::prelude::*;
-    use diesel_async::RunQueryDsl;
-
     let pool = expect_context::<crate::server_state::ServerState>().pool;
     let mut conn = pool.get().await?;
 
-    let videos = videos_table
-        .select(database::models::videos::Video::as_select())
-        .get_results(&mut conn)
-        .await?;
+    let videos = database::models::Video::list(&mut conn).await?;
 
     Ok(videos.into_iter().map(Into::into).collect())
 }

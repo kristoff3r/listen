@@ -53,24 +53,13 @@ type GetDownloadsResult = Vec<(api::Video, Vec<api::Download>)>;
 
 #[server(GetDownloads, "/api/leptos")]
 pub async fn get_downloads() -> Result<GetDownloadsResult, ServerFnError> {
-    use database::models::downloads::Download;
-    use database::models::videos::Video;
-    use database::schema::videos::table as videos_table;
-    use diesel::prelude::*;
-    use diesel_async::RunQueryDsl;
+    use diesel::GroupedBy;
 
     let pool = expect_context::<crate::server_state::ServerState>().pool;
     let mut conn = pool.get().await?;
 
-    let videos = videos_table
-        .select(Video::as_select())
-        .load(&mut conn)
-        .await?;
-
-    let downloads = Download::belonging_to(&videos)
-        .select(Download::as_select())
-        .load(&mut conn)
-        .await?;
+    let videos = database::models::Video::list(&mut conn).await?;
+    let downloads = database::models::Download::list_for_videos(&mut conn, &videos).await?;
 
     let res = downloads
         .grouped_by(&videos)

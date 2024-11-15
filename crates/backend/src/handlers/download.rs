@@ -7,15 +7,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use database::{
-    models::{
-        downloads::{Download, DownloadStatus, NewDownload},
-        videos::{NewVideo, Video},
-    },
-    schema,
-};
-use diesel::{insert_into, prelude::*, update};
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use database::models::{Download, DownloadStatus};
 use serde::Deserialize;
 use tokio::process::Command;
 use tracing::{info, warn};
@@ -46,41 +38,21 @@ pub async fn add_video_to_queue(
 
     let mut conn = pool.get().await?;
 
-    conn.transaction::<(), anyhow::Error, _>(|mut conn| {
-        async move {
-            let video_id: VideoId = insert_into(schema::videos::table)
-                .values(NewVideo {
-                    title: metadata.title.as_deref().unwrap(),
-                    youtube_id: Some(&metadata.id),
-                    url: &req.url,
-                    metadata: serde_json::to_value(&metadata).ok(),
-                    file_path: None,
-                })
-                .on_conflict_do_nothing()
-                .returning(schema::videos::video_id)
-                .get_result(&mut conn)
-                .await?;
-
-            insert_into(schema::downloads::table)
-                .values(NewDownload {
-                    video_id,
-                    error: None,
-                    retry_count: None,
-                    status: DownloadStatus::Pending,
-                })
-                .execute(&mut conn)
-                .await?;
-
-            info!(
-                "Added video: {} {:?} as id {video_id} to queue",
-                metadata.id, metadata.title
-            );
-
-            Ok(())
-        }
-        .scope_boxed()
-    })
+    let (video, _download) = database::models::Video::create(
+        &mut conn,
+        metadata.title.as_deref().unwrap(),
+        &metadata.id,
+        &req.url,
+        serde_json::to_value(&metadata)?,
+    )
     .await?;
+
+    info!(
+        "Added video: {youtube_id} {title:?} as id {video_id} to queue",
+        youtube_id = metadata.id,
+        title = metadata.title,
+        video_id = video.video_id
+    );
 
     Ok(())
 }
@@ -91,39 +63,18 @@ pub async fn redownload_video(
 ) -> Result<impl IntoResponse> {
     let mut conn = pool.get().await?;
 
-    insert_into(schema::downloads::table)
-        .values(NewDownload {
-            video_id,
-            error: None,
-            retry_count: None,
-            status: DownloadStatus::Pending,
-        })
-        .execute(&mut conn)
-        .await?;
+    database::models::Download::create(&mut conn, video_id).await?;
 
     Ok(())
 }
 
 pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Result<()> {
-    use database::schema::downloads::dsl as d;
-    use database::schema::videos::dsl as v;
-
     info!("Starting download queue handler");
 
     loop {
         let mut conn = pool.get().await?;
 
-        let rows = d::downloads
-            .inner_join(v::videos)
-            .filter(d::status.eq(DownloadStatus::Pending))
-            .filter(v::url.is_not_null())
-            .order_by((d::retry_count.asc(), d::created_at.asc()))
-            .limit(1)
-            .select((Download::as_select(), Video::as_select()))
-            .load::<(Download, Video)>(&mut conn)
-            .await?;
-
-        let Some((cur_download, cur_video)) = rows.into_iter().next() else {
+        let Some((cur_video, cur_download)) = Download::get_next_download(&mut conn).await? else {
             tokio::time::sleep(Duration::from_secs(5)).await;
             continue;
         };
@@ -132,18 +83,17 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
         let out_path = videos_dir.join(format!("{}.mp4", cur_video.video_id));
         if out_path.exists() && !cur_download.force {
             info!(
-                "Video {id} {title} already exists, skipping",
-                id = cur_video.video_id,
+                "Video {video_id} {title} already exists, skipping",
+                video_id = cur_video.video_id,
                 title = cur_video.title
             );
-            update(d::downloads.filter(d::download_id.eq(cur_download.download_id)))
-                .set((
-                    d::retry_count.eq(cur_download.retry_count + 1),
-                    d::error.eq("video already exists"),
-                    d::status.eq(DownloadStatus::Finished),
-                ))
-                .execute(&mut conn)
-                .await?;
+            database::models::Download::update_set_status(
+                &mut conn,
+                cur_download.download_id,
+                DownloadStatus::Finished,
+                "video already exists",
+            )
+            .await?;
             continue;
         }
 
@@ -166,32 +116,31 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
                 video_id = cur_video.video_id,
                 title = cur_video.title
             );
-            update(d::downloads.filter(d::download_id.eq(cur_download.download_id)))
-                .set((
-                    d::retry_count.eq(cur_download.retry_count + 1),
-                    d::error.eq(Some(&format!("download failed: {e}"))),
-                    if cur_download.retry_count >= 3 {
-                        d::status.eq(DownloadStatus::Failed)
-                    } else {
-                        d::status.eq(DownloadStatus::Pending)
-                    },
-                ))
-                .execute(&mut conn)
-                .await?;
+
+            database::models::Download::update_set_status(
+                &mut conn,
+                cur_download.download_id,
+                if cur_download.retry_count >= 3 {
+                    DownloadStatus::Failed
+                } else {
+                    DownloadStatus::Pending
+                },
+                &format!("download failed: {e}"),
+            )
+            .await?;
         } else {
             info!(
                 "Download {video_id} {title} finished",
                 video_id = cur_video.video_id,
                 title = cur_video.title
             );
-            update(d::downloads.filter(d::download_id.eq(cur_download.download_id)))
-                .set((
-                    d::retry_count.eq(cur_download.retry_count + 1),
-                    d::error.eq(""),
-                    d::status.eq(DownloadStatus::Finished),
-                ))
-                .execute(&mut conn)
-                .await?;
+            database::models::Download::update_set_status(
+                &mut conn,
+                cur_download.download_id,
+                DownloadStatus::Finished,
+                "",
+            )
+            .await?;
         }
     }
 }

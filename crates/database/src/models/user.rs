@@ -1,12 +1,14 @@
 use api::UserId;
-use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable, SelectableHelper};
+use diesel::{
+    delete, dsl::now, insert_into, prelude::*, update, QueryDsl, Selectable, SelectableHelper,
+};
 use diesel_async::{
     scoped_futures::ScopedFutureExt, AsyncConnection, AsyncPgConnection, RunQueryDsl,
 };
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
-use super::OidcMapping;
+use super::{OidcMapping, Result};
 
 #[derive(Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, StructuralConvert)]
 #[diesel(primary_key(user_id))]
@@ -15,8 +17,6 @@ use super::OidcMapping;
 #[convert(into(api::User))]
 pub struct User {
     pub user_id: UserId,
-    pub created_at: OffsetDateTime,
-    pub updated_at: OffsetDateTime,
     pub last_login: OffsetDateTime,
     pub last_activity: OffsetDateTime,
     pub email: String,
@@ -24,6 +24,9 @@ pub struct User {
     pub profile_picture_url: String,
     pub is_approved: bool,
     pub is_admin: bool,
+
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
 }
 
 #[derive(Insertable)]
@@ -44,11 +47,10 @@ impl User {
         profile_picture_url: &str,
         oidc_issuer_url: &str,
         oidc_issuer_id: &str,
-    ) -> anyhow::Result<(Self, OidcMapping)> {
-        conn.transaction::<_, _, _>(|conn| {
+    ) -> Result<(Self, OidcMapping)> {
+        conn.transaction(|conn| {
             async move {
-                let user =
-                    Self::create_without_oidc(conn, handle, email, profile_picture_url).await?;
+                let user = Self::create_raw(conn, handle, email, profile_picture_url).await?;
 
                 let oidc_mapping =
                     OidcMapping::create(conn, user.user_id, oidc_issuer_url, oidc_issuer_id)
@@ -61,12 +63,12 @@ impl User {
         .await
     }
 
-    pub async fn create_without_oidc(
+    pub async fn create_raw(
         conn: &mut AsyncPgConnection,
         handle: &str,
         email: &str,
         profile_picture_url: &str,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self> {
         use crate::schema::users::dsl as u;
 
         let result = insert_into(u::users)
@@ -81,15 +83,19 @@ impl User {
         Ok(result)
     }
 
-    pub async fn get_by_id(conn: &mut AsyncPgConnection, user_id: UserId) -> anyhow::Result<Self> {
+    pub async fn get_by_id(conn: &mut AsyncPgConnection, user_id: UserId) -> Result<Option<Self>> {
         use crate::schema::users::dsl as u;
-        let result = u::users.find(user_id).first(conn).await?;
+        let result = u::users.find(user_id).first(conn).await.optional()?;
         Ok(result)
     }
 
-    pub async fn get_by_email(conn: &mut AsyncPgConnection, email: &str) -> anyhow::Result<Self> {
+    pub async fn get_by_email(conn: &mut AsyncPgConnection, email: &str) -> Result<Option<Self>> {
         use crate::schema::users::dsl as u;
-        let result = u::users.filter(u::email.eq(email)).first(conn).await?;
+        let result = u::users
+            .filter(u::email.eq(email))
+            .first(conn)
+            .await
+            .optional()?;
         Ok(result)
     }
 
@@ -97,7 +103,7 @@ impl User {
         conn: &mut AsyncPgConnection,
         oidc_issuer_url: &str,
         oidc_issuer_id: &str,
-    ) -> anyhow::Result<(Self, OidcMapping)> {
+    ) -> Result<Option<(Self, OidcMapping)>> {
         use crate::schema::{oidc_mapping::dsl as m, users::dsl as u};
 
         let result = m::oidc_mapping
@@ -106,12 +112,13 @@ impl User {
             .filter(m::oidc_issuer_id.eq(oidc_issuer_id))
             .select((Self::as_select(), OidcMapping::as_select()))
             .first(conn)
-            .await?;
+            .await
+            .optional()?;
 
         Ok(result)
     }
 
-    pub async fn list(conn: &mut AsyncPgConnection) -> anyhow::Result<Vec<Self>> {
+    pub async fn list(conn: &mut AsyncPgConnection) -> Result<Vec<Self>> {
         use crate::schema::users::dsl as u;
         let results = u::users.get_results(conn).await?;
         Ok(results)
@@ -121,15 +128,12 @@ impl User {
         conn: &mut AsyncPgConnection,
         user_id: UserId,
         handle: &str,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
-                u::handle.eq(handle),
-            ))
+            .set((u::updated_at.eq(now), u::handle.eq(handle)))
             .execute(conn)
             .await?;
 
@@ -140,15 +144,12 @@ impl User {
         conn: &mut AsyncPgConnection,
         user_id: UserId,
         email: &str,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
-                u::email.eq(email),
-            ))
+            .set((u::updated_at.eq(now), u::email.eq(email)))
             .execute(conn)
             .await?;
 
@@ -159,13 +160,13 @@ impl User {
         conn: &mut AsyncPgConnection,
         user_id: UserId,
         profile_picture_url: &str,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
             .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
+                u::updated_at.eq(now),
                 u::profile_picture_url.eq(profile_picture_url),
             ))
             .execute(conn)
@@ -178,15 +179,12 @@ impl User {
         conn: &mut AsyncPgConnection,
         user_id: UserId,
         is_approved: bool,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
-                u::is_approved.eq(is_approved),
-            ))
+            .set((u::updated_at.eq(now), u::is_approved.eq(is_approved)))
             .execute(conn)
             .await?;
 
@@ -197,58 +195,43 @@ impl User {
         conn: &mut AsyncPgConnection,
         user_id: UserId,
         is_admin: bool,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
-                u::is_admin.eq(is_admin),
-            ))
+            .set((u::updated_at.eq(now), u::is_admin.eq(is_admin)))
             .execute(conn)
             .await?;
 
         Ok(())
     }
 
-    pub async fn update_last_activity(
-        conn: &mut AsyncPgConnection,
-        user_id: UserId,
-    ) -> anyhow::Result<()> {
+    pub async fn update_last_activity(conn: &mut AsyncPgConnection, user_id: UserId) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
-                u::last_activity.eq(OffsetDateTime::now_utc()),
-            ))
+            .set((u::updated_at.eq(now), u::last_activity.eq(now)))
             .execute(conn)
             .await?;
 
         Ok(())
     }
 
-    pub async fn update_last_login(
-        conn: &mut AsyncPgConnection,
-        user_id: UserId,
-    ) -> anyhow::Result<()> {
+    pub async fn update_last_login(conn: &mut AsyncPgConnection, user_id: UserId) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         update(u::users)
             .filter(u::user_id.eq(user_id))
-            .set((
-                u::updated_at.eq(OffsetDateTime::now_utc()),
-                u::last_login.eq(OffsetDateTime::now_utc()),
-            ))
+            .set((u::updated_at.eq(now), u::last_login.eq(now)))
             .execute(conn)
             .await?;
 
         Ok(())
     }
 
-    pub async fn delete(conn: &mut AsyncPgConnection, user_id: UserId) -> anyhow::Result<()> {
+    pub async fn delete(conn: &mut AsyncPgConnection, user_id: UserId) -> Result<()> {
         use crate::schema::users::dsl as u;
 
         delete(u::users)

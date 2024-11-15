@@ -4,7 +4,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
-use super::User;
+use super::{Result, User};
 
 #[derive(
     Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, Associations, StructuralConvert,
@@ -16,11 +16,12 @@ use super::User;
 #[convert(into(api::OidcMapping))]
 pub struct OidcMapping {
     pub oidc_mapping_id: OidcMappingId,
-    pub created_at: OffsetDateTime,
-    pub updated_at: OffsetDateTime,
     pub oidc_issuer_url: String,
     pub oidc_issuer_id: String,
     pub user_id: UserId,
+
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
 }
 
 #[derive(Insertable)]
@@ -39,7 +40,7 @@ impl OidcMapping {
         user_id: UserId,
         oidc_issuer_url: &str,
         oidc_issuer_id: &str,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self> {
         use crate::schema::oidc_mapping::dsl as m;
 
         let result = insert_into(m::oidc_mapping)
@@ -57,16 +58,20 @@ impl OidcMapping {
     pub async fn get_by_id(
         conn: &mut AsyncPgConnection,
         oidc_mapping_id: OidcMappingId,
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Option<Self>> {
         use crate::schema::oidc_mapping::dsl as m;
-        let result = m::oidc_mapping.find(oidc_mapping_id).first(conn).await?;
+        let result = m::oidc_mapping
+            .find(oidc_mapping_id)
+            .first(conn)
+            .await
+            .optional()?;
         Ok(result)
     }
 
     pub async fn list_by_user_id(
         conn: &mut AsyncPgConnection,
         user_id: UserId,
-    ) -> anyhow::Result<Vec<Self>> {
+    ) -> Result<Vec<Self>> {
         use crate::schema::oidc_mapping::dsl as m;
 
         let results = m::oidc_mapping
@@ -80,7 +85,7 @@ impl OidcMapping {
     pub async fn delete(
         conn: &mut AsyncPgConnection,
         oidc_mapping_id: OidcMappingId,
-    ) -> anyhow::Result<()> {
+    ) -> Result<()> {
         use crate::schema::oidc_mapping::dsl as m;
 
         delete(m::oidc_mapping)

@@ -6,30 +6,28 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use database::models::videos::Video;
-use diesel::prelude::*;
-use diesel_async::RunQueryDsl;
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 use tracing::info;
 use ui::server_state::VideosDir;
 
-use crate::{error::Result, PgPool};
+use crate::{
+    error::{ListenErrorType, Result},
+    PgPool,
+};
 
 pub async fn get_video(
     State(pool): State<PgPool>,
     Path(video_id): Path<VideoId>,
 ) -> Result<Json<api::Video>> {
-    use database::schema::videos::table as video_table;
     let mut conn = pool.get().await?;
+    let res = database::models::Video::get_by_id(&mut conn, video_id).await?;
 
-    let res = video_table
-        .find(video_id)
-        .select(Video::as_select())
-        .first(&mut conn)
-        .await?;
-
-    Ok(Json(res.into()))
+    if let Some(res) = res {
+        Ok(Json(res.into()))
+    } else {
+        Err(ListenErrorType::NotFound.into())
+    }
 }
 
 pub async fn play_video(
