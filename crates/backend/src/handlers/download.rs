@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use anyhow::Context;
+use api::VideoId;
 use axum::{
     extract::{Path, State},
     response::IntoResponse,
@@ -47,7 +48,7 @@ pub async fn add_video_to_queue(
 
     conn.transaction::<(), anyhow::Error, _>(|mut conn| {
         async move {
-            let id: i32 = insert_into(schema::videos::table)
+            let video_id: VideoId = insert_into(schema::videos::table)
                 .values(NewVideo {
                     title: metadata.title.as_deref().unwrap(),
                     youtube_id: Some(&metadata.id),
@@ -56,13 +57,13 @@ pub async fn add_video_to_queue(
                     file_path: None,
                 })
                 .on_conflict_do_nothing()
-                .returning(schema::videos::id)
+                .returning(schema::videos::video_id)
                 .get_result(&mut conn)
                 .await?;
 
             insert_into(schema::downloads::table)
                 .values(NewDownload {
-                    video_id: id,
+                    video_id,
                     error: None,
                     retry_count: None,
                     status: DownloadStatus::Pending,
@@ -71,7 +72,7 @@ pub async fn add_video_to_queue(
                 .await?;
 
             info!(
-                "Added video: {} {:?} as id {id} to queue",
+                "Added video: {} {:?} as id {video_id} to queue",
                 metadata.id, metadata.title
             );
 
@@ -86,13 +87,13 @@ pub async fn add_video_to_queue(
 
 pub async fn redownload_video(
     State(pool): State<PgPool>,
-    Path(id): Path<i32>,
+    Path(video_id): Path<VideoId>,
 ) -> Result<impl IntoResponse> {
     let mut conn = pool.get().await?;
 
     insert_into(schema::downloads::table)
         .values(NewDownload {
-            video_id: id,
+            video_id,
             error: None,
             retry_count: None,
             status: DownloadStatus::Pending,
@@ -128,14 +129,14 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
         };
 
         let videos_dir = videos_dir.clone();
-        let out_path = videos_dir.join(format!("{}.mp4", cur_video.id));
+        let out_path = videos_dir.join(format!("{}.mp4", cur_video.video_id));
         if out_path.exists() && !cur_download.force {
             info!(
                 "Video {id} {title} already exists, skipping",
-                id = cur_video.id,
+                id = cur_video.video_id,
                 title = cur_video.title
             );
-            update(d::downloads.filter(d::id.eq(cur_download.id)))
+            update(d::downloads.filter(d::download_id.eq(cur_download.download_id)))
                 .set((
                     d::retry_count.eq(cur_download.retry_count + 1),
                     d::error.eq("video already exists"),
@@ -146,7 +147,11 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
             continue;
         }
 
-        info!("Downloading video: {} {}", cur_video.id, cur_video.title);
+        info!(
+            "Downloading video: {video_id} {title}",
+            video_id = cur_video.video_id,
+            title = cur_video.title
+        );
         let res = tokio::task::spawn(async move {
             let tmp_dir = tempfile::tempdir_in(&*videos_dir)?;
             download_file(cur_video.url, tmp_dir.path(), &out_path).await?;
@@ -157,11 +162,11 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
 
         if let Err(e) = res {
             warn!(
-                "Download {id} {title} failed: {e}",
-                id = cur_video.id,
+                "Download {video_id} {title} failed: {e}",
+                video_id = cur_video.video_id,
                 title = cur_video.title
             );
-            update(d::downloads.filter(d::id.eq(cur_download.id)))
+            update(d::downloads.filter(d::download_id.eq(cur_download.download_id)))
                 .set((
                     d::retry_count.eq(cur_download.retry_count + 1),
                     d::error.eq(Some(&format!("download failed: {e}"))),
@@ -175,11 +180,11 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
                 .await?;
         } else {
             info!(
-                "Download {id} {title} finished",
-                id = cur_video.id,
+                "Download {video_id} {title} finished",
+                video_id = cur_video.video_id,
                 title = cur_video.title
             );
-            update(d::downloads.filter(d::id.eq(cur_download.id)))
+            update(d::downloads.filter(d::download_id.eq(cur_download.download_id)))
                 .set((
                     d::retry_count.eq(cur_download.retry_count + 1),
                     d::error.eq(""),

@@ -1,3 +1,4 @@
+use api::{DownloadId, VideoId};
 use diesel::{
     prelude::{Associations, Insertable},
     Identifiable, Queryable, Selectable,
@@ -12,12 +13,13 @@ use crate::models::videos::Video;
     Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, Associations, StructuralConvert,
 )]
 #[diesel(table_name = crate::schema::downloads)]
+#[diesel(primary_key(download_id))]
 #[diesel(belongs_to(Video))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[convert(into(api::Download))]
 pub struct Download {
-    pub id: i32,
-    pub video_id: i32,
+    pub download_id: DownloadId,
+    pub video_id: VideoId,
     pub error: Option<String>,
     pub status: DownloadStatus,
     pub retry_count: i32,
@@ -30,7 +32,7 @@ pub struct Download {
 #[diesel(table_name = crate::schema::downloads)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewDownload<'a> {
-    pub video_id: i32,
+    pub video_id: VideoId,
     pub error: Option<&'a str>,
     pub retry_count: Option<i32>,
     pub status: DownloadStatus,

@@ -1,13 +1,15 @@
+use api::VideoId;
 use diesel::{prelude::Insertable, Identifiable, Queryable, Selectable};
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
 #[derive(Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, StructuralConvert)]
+#[diesel(primary_key(video_id))]
 #[diesel(table_name = crate::schema::videos)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[convert(into(api::Video))]
 pub struct Video {
-    pub id: i32,
+    pub video_id: VideoId,
     pub title: String,
     pub youtube_id: Option<String>,
     pub url: String,

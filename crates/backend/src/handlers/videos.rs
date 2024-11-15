@@ -1,3 +1,4 @@
+use api::VideoId;
 use axum::{
     body::Body,
     extract::{Path, State},
@@ -17,13 +18,13 @@ use crate::{error::Result, PgPool};
 
 pub async fn get_video(
     State(pool): State<PgPool>,
-    Path(id): Path<i32>,
+    Path(video_id): Path<VideoId>,
 ) -> Result<Json<api::Video>> {
     use database::schema::videos::table as video_table;
     let mut conn = pool.get().await?;
 
     let res = video_table
-        .find(id)
+        .find(video_id)
         .select(Video::as_select())
         .first(&mut conn)
         .await?;

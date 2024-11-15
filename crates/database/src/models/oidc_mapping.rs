@@ -1,17 +1,19 @@
+use api::{OidcMappingId, UserId};
 use diesel::{delete, insert_into, prelude::*, QueryDsl};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
-use typed_uuid::Uuid;
 
-use super::UserId;
+use super::User;
 
-pub type OidcMappingId = Uuid<OidcMapping>;
-
-#[derive(Queryable, Selectable, Identifiable)]
+#[derive(
+    Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, Associations, StructuralConvert,
+)]
 #[diesel(primary_key(oidc_mapping_id))]
 #[diesel(table_name = crate::schema::oidc_mapping)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug)]
+#[diesel(belongs_to(User))]
+#[convert(into(api::OidcMapping))]
 pub struct OidcMapping {
     pub oidc_mapping_id: OidcMappingId,
     pub created_at: OffsetDateTime,

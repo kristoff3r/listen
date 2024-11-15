@@ -1,19 +1,18 @@
+use api::UserId;
 use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable, SelectableHelper};
 use diesel_async::{
     scoped_futures::ScopedFutureExt, AsyncConnection, AsyncPgConnection, RunQueryDsl,
 };
+use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
-use typed_uuid::Uuid;
 
 use super::OidcMapping;
 
-pub type UserId = Uuid<User>;
-
-#[derive(Queryable, Selectable, Identifiable)]
+#[derive(Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, StructuralConvert)]
 #[diesel(primary_key(user_id))]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug)]
+#[convert(into(api::User))]
 pub struct User {
     pub user_id: UserId,
     pub created_at: OffsetDateTime,

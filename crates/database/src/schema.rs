@@ -10,9 +10,9 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::DownloadStatus;
 
-    downloads (id) {
-        id -> Int4,
-        video_id -> Int4,
+    downloads (download_id) {
+        download_id -> Uuid,
+        video_id -> Uuid,
         error -> Nullable<Text>,
         status -> DownloadStatus,
         retry_count -> Int4,
@@ -70,8 +70,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    videos (id) {
-        id -> Int4,
+    videos (video_id) {
+        video_id -> Uuid,
         title -> Text,
         youtube_id -> Nullable<Text>,
         url -> Text,

@@ -1,18 +1,20 @@
+use api::{UserId, UserSessionId};
 use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
+use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
-use typed_uuid::Uuid;
 
-use super::UserId;
+use crate::models::User;
 
-pub type UserSessionId = Uuid<UserSession>;
-
-#[derive(Queryable, Selectable, Identifiable)]
+#[derive(
+    Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, Associations, StructuralConvert,
+)]
 #[diesel(primary_key(user_session_id))]
 #[diesel(table_name = crate::schema::user_sessions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Clone, Debug)]
+#[diesel(belongs_to(User))]
+#[convert(into(api::UserSession))]
 pub struct UserSession {
     pub user_session_id: UserSessionId,
     pub created_at: OffsetDateTime,
@@ -24,8 +26,7 @@ pub struct UserSession {
     pub csrf_token: Option<String>,
     pub nonce: Option<String>,
     pub pkce_code_verifier: Option<String>,
-    //
-    // // Only set after logged in
+    // Only set after logged in
     pub user_id: Option<UserId>,
 }
 
