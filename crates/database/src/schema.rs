@@ -23,6 +23,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    oidc_mapping (oidc_mapping_id) {
+        oidc_mapping_id -> Uuid,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        #[max_length = 255]
+        oidc_issuer_url -> Varchar,
+        #[max_length = 255]
+        oidc_issuer_id -> Varchar,
+        user_id -> Uuid,
+    }
+}
+
+diesel::table! {
     user_sessions (user_session_id) {
         user_session_id -> Uuid,
         created_at -> Timestamptz,
@@ -44,12 +57,12 @@ diesel::table! {
         user_id -> Uuid,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        last_login -> Timestamptz,
+        last_activity -> Timestamptz,
         #[max_length = 255]
         email -> Varchar,
         #[max_length = 255]
         handle -> Varchar,
-        #[max_length = 255]
-        oidc_issuer_url -> Varchar,
         profile_picture_url -> Text,
         is_approved -> Bool,
         is_admin -> Bool,
@@ -70,6 +83,13 @@ diesel::table! {
 }
 
 diesel::joinable!(downloads -> videos (video_id));
+diesel::joinable!(oidc_mapping -> users (user_id));
 diesel::joinable!(user_sessions -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(downloads, user_sessions, users, videos,);
+diesel::allow_tables_to_appear_in_same_query!(
+    downloads,
+    oidc_mapping,
+    user_sessions,
+    users,
+    videos,
+);

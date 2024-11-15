@@ -1,7 +1,4 @@
-use diesel::{
-    delete, insert_into, prelude::*, update, upsert::excluded, QueryDsl, Selectable,
-    SelectableHelper,
-};
+use diesel::{delete, insert_into, prelude::*, update, QueryDsl, Selectable, SelectableHelper};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
 use serde::{Deserialize, Serialize};
@@ -10,6 +7,7 @@ use time::OffsetDateTime;
 use typed_uuid::Uuid;
 
 pub type UserId = Uuid<User>;
+pub type OidcMappingId = Uuid<OidcMapping>;
 pub type UserSessionId = Uuid<UserSession>;
 
 #[derive(Queryable, Selectable, Identifiable)]
@@ -21,9 +19,10 @@ pub struct User {
     pub user_id: UserId,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
+    pub last_login: OffsetDateTime,
+    pub last_activity: OffsetDateTime,
     pub email: String,
     pub handle: String,
-    pub oidc_issuer_url: String,
     pub profile_picture_url: String,
     pub is_approved: bool,
     pub is_admin: bool,
@@ -36,10 +35,33 @@ pub struct User {
 pub struct NewUser<'a> {
     pub email: &'a str,
     pub handle: &'a str,
-    pub oidc_issuer_url: &'a str,
     pub profile_picture_url: &'a str,
     pub is_approved: bool,
     pub is_admin: bool,
+}
+
+#[derive(Queryable, Selectable, Identifiable)]
+#[diesel(primary_key(oidc_mapping_id))]
+#[diesel(table_name = crate::schema::oidc_mapping)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct OidcMapping {
+    pub oidc_mapping_id: OidcMappingId,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
+    pub oidc_issuer_url: String,
+    pub oidc_issuer_id: String,
+    pub user_id: UserId,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::oidc_mapping)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NewOidcMapping<'a> {
+    pub oidc_issuer_url: &'a str,
+    pub oidc_issuer_id: &'a str,
+    pub user_id: UserId,
 }
 
 #[derive(Queryable, Selectable, Identifiable)]
@@ -74,159 +96,281 @@ pub struct NewUserSession<'a> {
     pub pkce_code_verifier: &'a str,
 }
 
-pub async fn create_or_update(
-    conn: &mut AsyncPgConnection,
-    email: &str,
-    oidc_issuer_url: &str,
-    profile_picture_url: &str,
-) -> anyhow::Result<User> {
-    use crate::schema::users::dsl as u;
+impl User {
+    pub async fn create(
+        conn: &mut AsyncPgConnection,
+        handle: &str,
+        email: &str,
+        profile_picture_url: &str,
+    ) -> anyhow::Result<Self> {
+        use crate::schema::users::dsl as u;
 
-    let handle = format!("Anonymous{}", rand::random::<u32>());
+        let result = insert_into(u::users)
+            .values(NewUser {
+                handle,
+                email,
+                profile_picture_url,
+                is_approved: false,
+                is_admin: false,
+            })
+            .get_result(conn)
+            .await?;
 
-    let user = insert_into(u::users)
-        .values(NewUser {
-            email,
-            handle: &handle,
-            oidc_issuer_url,
-            profile_picture_url,
-            is_approved: false,
-            is_admin: false,
-        })
-        .on_conflict((u::email, u::oidc_issuer_url))
-        .do_update()
-        .set(u::profile_picture_url.eq(excluded(u::profile_picture_url)))
-        .returning(User::as_select())
-        .get_result(conn)
-        .await?;
+        Ok(result)
+    }
 
-    Ok(user)
+    pub async fn get_by_id(conn: &mut AsyncPgConnection, user_id: UserId) -> anyhow::Result<Self> {
+        use crate::schema::users::dsl as u;
+        let result = u::users.find(user_id).first(conn).await?;
+        Ok(result)
+    }
+
+    pub async fn get_by_email(conn: &mut AsyncPgConnection, email: &str) -> anyhow::Result<Self> {
+        use crate::schema::users::dsl as u;
+
+        let result = u::users.filter(u::email.eq(email)).first(conn).await?;
+
+        Ok(result)
+    }
+
+    pub async fn get_by_oidc(
+        conn: &mut AsyncPgConnection,
+        oidc_issuer_url: &str,
+        oidc_issuer_id: &str,
+    ) -> anyhow::Result<(Self, OidcMapping)> {
+        use crate::schema::oidc_mapping::dsl as m;
+        use crate::schema::users::dsl as u;
+
+        let result = m::oidc_mapping
+            .inner_join(u::users)
+            .filter(m::oidc_issuer_url.eq(oidc_issuer_url))
+            .filter(m::oidc_issuer_id.eq(oidc_issuer_id))
+            .select((Self::as_select(), OidcMapping::as_select()))
+            .first(conn)
+            .await?;
+
+        Ok(result)
+    }
+
+    pub async fn list(conn: &mut AsyncPgConnection) -> anyhow::Result<Vec<Self>> {
+        use crate::schema::users::dsl as u;
+        let results = u::users.get_results(conn).await?;
+        Ok(results)
+    }
+
+    pub async fn update_handle(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+        handle: &str,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set(u::handle.eq(handle))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_email(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+        email: &str,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set(u::email.eq(email))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_is_approved(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+        is_approved: bool,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set(u::is_approved.eq(is_approved))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_is_admin(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+        is_admin: bool,
+    ) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        update(u::users)
+            .filter(u::user_id.eq(user_id))
+            .set(u::is_admin.eq(is_admin))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete(conn: &mut AsyncPgConnection, user_id: UserId) -> anyhow::Result<()> {
+        use crate::schema::users::dsl as u;
+
+        delete(u::users)
+            .filter(u::user_id.eq(user_id))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
 }
 
-pub async fn list_users(conn: &mut AsyncPgConnection) -> anyhow::Result<Vec<User>> {
-    use crate::schema::users::dsl as u;
-    let users = u::users.get_results(conn).await?;
-    Ok(users)
+impl OidcMapping {
+    pub async fn create(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+        oidc_issuer_url: &str,
+        oidc_issuer_id: &str,
+    ) -> anyhow::Result<()> {
+        use crate::schema::oidc_mapping::dsl as m;
+
+        insert_into(m::oidc_mapping)
+            .values(NewOidcMapping {
+                user_id,
+                oidc_issuer_url,
+                oidc_issuer_id,
+            })
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_by_id(
+        conn: &mut AsyncPgConnection,
+        oidc_mapping_id: OidcMappingId,
+    ) -> anyhow::Result<Self> {
+        use crate::schema::oidc_mapping::dsl as m;
+        let result = m::oidc_mapping.find(oidc_mapping_id).first(conn).await?;
+        Ok(result)
+    }
+
+    pub async fn list_by_user_id(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+    ) -> anyhow::Result<Vec<Self>> {
+        use crate::schema::oidc_mapping::dsl as m;
+
+        let results = m::oidc_mapping
+            .filter(m::user_id.eq(user_id))
+            .get_results(conn)
+            .await?;
+
+        Ok(results)
+    }
+
+    pub async fn delete(
+        conn: &mut AsyncPgConnection,
+        oidc_mapping_id: OidcMappingId,
+    ) -> anyhow::Result<()> {
+        use crate::schema::oidc_mapping::dsl as m;
+
+        delete(m::oidc_mapping)
+            .filter(m::oidc_mapping_id.eq(oidc_mapping_id))
+            .execute(conn)
+            .await?;
+
+        Ok(())
+    }
 }
 
-pub async fn query_user_by_id(
-    conn: &mut AsyncPgConnection,
-    user_id: UserId,
-) -> anyhow::Result<User> {
-    use crate::schema::users::dsl as u;
-    let user = u::users.find(user_id).first(conn).await?;
-    Ok(user)
-}
+impl UserSession {
+    pub async fn create(
+        conn: &mut AsyncPgConnection,
+        oidc_issuer_url: &str,
+        csrf_token: CsrfToken,
+        nonce: Nonce,
+        pkce_code_verifier: PkceCodeVerifier,
+    ) -> anyhow::Result<UserSessionId> {
+        use crate::schema::user_sessions::dsl as s;
 
-pub async fn query_user_by_email_and_oidc_issuer_url(
-    conn: &mut AsyncPgConnection,
-    email: &str,
-    oidc_issuer_url: &str,
-) -> anyhow::Result<User> {
-    use crate::schema::users::dsl as u;
-    let user = u::users
-        .filter(u::email.eq(email))
-        .filter(u::oidc_issuer_url.eq(oidc_issuer_url))
-        .select(User::as_select())
-        .first(conn)
-        .await?;
-    Ok(user)
-}
+        let session_id = insert_into(s::user_sessions)
+            .values(NewUserSession {
+                oidc_issuer_url,
+                csrf_token: csrf_token.secret(),
+                nonce: nonce.secret(),
+                pkce_code_verifier: pkce_code_verifier.secret(),
+            })
+            .returning(s::user_session_id)
+            .get_result(conn)
+            .await?;
 
-pub async fn update_handle(
-    conn: &mut AsyncPgConnection,
-    user_id: UserId,
-    handle: String,
-) -> anyhow::Result<()> {
-    use crate::schema::users::dsl as u;
-    update(u::users)
-        .filter(u::user_id.eq(user_id))
-        .set(u::handle.eq(handle))
-        .execute(conn)
-        .await?;
-    Ok(())
-}
+        Ok(session_id)
+    }
 
-pub async fn set_approved(
-    conn: &mut AsyncPgConnection,
-    user_id: UserId,
-    is_approved: bool,
-) -> anyhow::Result<()> {
-    use crate::schema::users::dsl as u;
-    update(u::users)
-        .filter(u::user_id.eq(user_id))
-        .set(u::is_approved.eq(is_approved))
-        .execute(conn)
-        .await?;
-    Ok(())
-}
+    pub async fn get_by_id(
+        conn: &mut AsyncPgConnection,
+        user_session_id: UserSessionId,
+    ) -> anyhow::Result<Self> {
+        use crate::schema::user_sessions::dsl as s;
+        let result = s::user_sessions.find(user_session_id).first(conn).await?;
+        Ok(result)
+    }
 
-pub async fn set_admin(
-    conn: &mut AsyncPgConnection,
-    user_id: UserId,
-    is_admin: bool,
-) -> anyhow::Result<()> {
-    use crate::schema::users::dsl as u;
-    update(u::users)
-        .filter(u::user_id.eq(user_id))
-        .set(u::is_admin.eq(is_admin))
-        .execute(conn)
-        .await?;
-    Ok(())
-}
+    pub async fn list_by_user_id(
+        conn: &mut AsyncPgConnection,
+        user_id: UserId,
+    ) -> anyhow::Result<Vec<Self>> {
+        use crate::schema::user_sessions::dsl as s;
 
-pub async fn new_session(
-    conn: &mut AsyncPgConnection,
-    oidc_issuer_url: &str,
-    csrf_token: CsrfToken,
-    nonce: Nonce,
-    pkce_code_verifier: PkceCodeVerifier,
-) -> anyhow::Result<UserSessionId> {
-    use crate::schema::user_sessions::dsl as s;
+        let results = s::user_sessions
+            .filter(s::user_id.eq(user_id))
+            .get_results(conn)
+            .await?;
 
-    let session_id = insert_into(s::user_sessions)
-        .values(NewUserSession {
-            oidc_issuer_url,
-            csrf_token: csrf_token.secret(),
-            nonce: nonce.secret(),
-            pkce_code_verifier: pkce_code_verifier.secret(),
-        })
-        .returning(s::user_session_id)
-        .get_result(conn)
-        .await?;
-    Ok(session_id)
-}
+        Ok(results)
+    }
 
-pub async fn delete_session(
-    conn: &mut AsyncPgConnection,
-    user_session_id: UserSessionId,
-) -> anyhow::Result<()> {
-    use crate::schema::user_sessions::dsl as s;
+    pub async fn complete_login(
+        conn: &mut AsyncPgConnection,
+        user_session_id: UserSessionId,
+        user_id: UserId,
+    ) -> anyhow::Result<()> {
+        use crate::schema::user_sessions::dsl as s;
 
-    delete(s::user_sessions)
-        .filter(s::user_session_id.eq(user_session_id))
-        .execute(conn)
-        .await?;
-    Ok(())
-}
+        update(s::user_sessions)
+            .filter(s::user_session_id.eq(user_session_id))
+            .set((
+                s::user_id.eq(user_id),
+                s::oidc_issuer_url.eq(None::<String>),
+                s::csrf_token.eq(None::<String>),
+                s::nonce.eq(None::<String>),
+                s::pkce_code_verifier.eq(None::<String>),
+            ))
+            .execute(conn)
+            .await?;
+        Ok(())
+    }
 
-pub async fn log_session_in(
-    conn: &mut AsyncPgConnection,
-    user_session_id: UserSessionId,
-    user_id: UserId,
-) -> anyhow::Result<()> {
-    use crate::schema::user_sessions::dsl as s;
+    pub async fn delete(
+        conn: &mut AsyncPgConnection,
+        user_session_id: UserSessionId,
+    ) -> anyhow::Result<()> {
+        use crate::schema::user_sessions::dsl as s;
 
-    update(s::user_sessions)
-        .filter(s::user_session_id.eq(user_session_id))
-        .set((
-            s::user_id.eq(user_id),
-            s::oidc_issuer_url.eq(None::<String>),
-            s::csrf_token.eq(None::<String>),
-            s::nonce.eq(None::<String>),
-            s::pkce_code_verifier.eq(None::<String>),
-        ))
-        .execute(conn)
-        .await?;
-    Ok(())
+        delete(s::user_sessions)
+            .filter(s::user_session_id.eq(user_session_id))
+            .execute(conn)
+            .await?;
+        Ok(())
+    }
 }
