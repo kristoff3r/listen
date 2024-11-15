@@ -49,16 +49,8 @@ impl User {
     ) -> anyhow::Result<(Self, OidcMapping)> {
         conn.transaction::<_, _, _>(|conn| {
             async move {
-                use crate::schema::users::dsl as u;
-
-                let user: User = insert_into(u::users)
-                    .values(NewUser {
-                        handle,
-                        email,
-                        profile_picture_url,
-                    })
-                    .get_result(conn)
-                    .await?;
+                let user =
+                    Self::create_without_oidc(conn, handle, email, profile_picture_url).await?;
 
                 let oidc_mapping =
                     OidcMapping::create(conn, user.user_id, oidc_issuer_url, oidc_issuer_id)
@@ -69,6 +61,26 @@ impl User {
             .scope_boxed()
         })
         .await
+    }
+
+    pub async fn create_without_oidc(
+        conn: &mut AsyncPgConnection,
+        handle: &str,
+        email: &str,
+        profile_picture_url: &str,
+    ) -> anyhow::Result<Self> {
+        use crate::schema::users::dsl as u;
+
+        let result = insert_into(u::users)
+            .values(NewUser {
+                handle,
+                email,
+                profile_picture_url,
+            })
+            .get_result(conn)
+            .await?;
+
+        Ok(result)
     }
 
     pub async fn get_by_id(conn: &mut AsyncPgConnection, user_id: UserId) -> anyhow::Result<Self> {
