@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE videos (
-    video_id uuid PRIMARY KEY,
+    video_id uuid PRIMARY KEY default gen_random_uuid(),
     title text NOT NULL,
     youtube_id text,
     url text NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE videos (
 CREATE TYPE download_status AS ENUM ('pending', 'processing', 'complete', 'failed');
 
 CREATE TABLE downloads (
-    download_id uuid PRIMARY KEY,
+    download_id uuid PRIMARY KEY default gen_random_uuid(),
     video_id uuid NOT NULL,
     error text,
     status download_status NOT NULL default 'pending',
