@@ -16,7 +16,6 @@ cfg-if = "1.0.0"
 console_error_panic_hook = "0.1"
 console_log = "1.0.0"
 deadpool = "0.12.1"
-derive_more = "1.0.0"
 diesel = { version = "2.2.4", features = [
     "postgres",
     "time",
@@ -47,8 +46,9 @@ reqwest = { version = "0.12.8", default-features = false, features = [
 ] }
 serde = "1.0"
 serde_json = "1.0"
+structural-convert = "0.13.0"
 strum = "0.26.3"
-thiserror = "1"
+thiserror = "2.0.3"
 time = "0.3.36"
 tokio = "1.41.0"
 tokio-tungstenite = "0.24.0"

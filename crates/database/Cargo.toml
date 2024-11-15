@@ -16,5 +16,5 @@ diesel_async_migrations.workspace = true
 openidconnect.workspace = true
 rand.workspace = true
 serde_json = { workspace = true }
-structural-convert = "0.13"
+structural-convert.workspace = true
 time = { workspace = true, features = ["serde"] }
