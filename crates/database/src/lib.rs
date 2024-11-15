@@ -2,7 +2,7 @@ use diesel::{Associations, Identifiable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
-pub mod auth;
+pub mod models;
 pub mod schema;
 
 pub const MIGRATIONS: diesel_async_migrations::EmbeddedMigrations =
