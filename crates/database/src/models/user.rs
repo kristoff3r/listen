@@ -91,9 +91,7 @@ impl User {
 
     pub async fn get_by_email(conn: &mut AsyncPgConnection, email: &str) -> anyhow::Result<Self> {
         use crate::schema::users::dsl as u;
-
         let result = u::users.filter(u::email.eq(email)).first(conn).await?;
-
         Ok(result)
     }
 
