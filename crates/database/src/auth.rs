@@ -388,7 +388,7 @@ impl UserSession {
         Ok(results)
     }
 
-    pub async fn complete_login(
+    pub async fn update_after_completed_login(
         conn: &mut AsyncPgConnection,
         user_session_id: UserSessionId,
         user_id: UserId,
