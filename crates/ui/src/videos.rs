@@ -12,7 +12,7 @@ pub fn VideosPage() -> impl IntoView {
             <div class="flex w-full min-h-screen">
                 <div class="w-[200px] bg-blue-400">
                     {move || match videos.get() {
-                        Some(Ok(videos)) => view! { <VideoList videos selected/> }.into_any(),
+                        Some(Ok(videos)) => view! { <VideoList videos selected /> }.into_any(),
                         Some(Err(e)) => view! { {format!("error loading video: {e}").into_any()} },
                         _ => view! { <p>"Loading..."</p> }.into_any(),
                     }}
@@ -20,7 +20,7 @@ pub fn VideosPage() -> impl IntoView {
                 </div>
                 <div class="flex flex-1 items-center justify-center w-fit bg-black text-gray-400">
                     {move || match selected.get() {
-                        Some(id) => view! { <EmbedLocal id=id/> }.into_any(),
+                        Some(id) => view! { <EmbedLocal id=id /> }.into_any(),
                         None => view! { <p>"Select a video"</p> }.into_any(),
                     }}
 
@@ -34,7 +34,7 @@ pub fn VideosPage() -> impl IntoView {
 pub fn video_list(videos: Vec<Video>, selected: RwSignal<Option<i32>>) -> impl IntoView {
     let entries = videos
         .into_iter()
-        .map(|video| view! { <VideoListEntry video selected/> })
+        .map(|video| view! { <VideoListEntry video selected /> })
         .collect_view();
     view! { <div class="flex flex-col gap-2">{entries}</div> }
 }
@@ -57,7 +57,7 @@ pub fn video_list_entry(video: Video, selected: RwSignal<Option<i32>>) -> impl I
 pub fn embed_local(id: i32) -> impl IntoView {
     view! {
         <video class="h-full" controls>
-            <source src=format!("/api/videos/{id}/play") type="video/mp4"/>
+            <source src=format!("/api/videos/{id}/play") type="video/mp4" />
         </video>
     }
 }

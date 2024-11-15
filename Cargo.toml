@@ -33,10 +33,16 @@ gloo-net = "0.6.0"
 gloo-storage = "0.3.0"
 headers = "0.4.0"
 http = "1"
+icondata = { version = "0.4.0", default-features = false, features = [
+    "bootstrap-icons",
+    "github-octicons",
+    "tabler-icons",
+    "lucide",
+    "feather",
+] }
 leptos = "0.7.0-rc1"
 leptos_axum = "0.7.0-rc1"
-# leptos_icons = "0.3"
-icondata = { version = "0.4.0", default-features = false }
+leptos_icons = { git = "https://github.com/PenguinWithATie/leptos-icons", branch = "main" }
 leptos_meta = "0.7.0-rc1"
 leptos_router = "0.7.0-rc1"
 log = "0.4.22"

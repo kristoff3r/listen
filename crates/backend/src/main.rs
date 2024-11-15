@@ -9,7 +9,6 @@ use axum::{
     Router,
 };
 use database::MIGRATIONS;
-use fileserv::file_and_error_handler;
 use leptos::{logging::log, prelude::*};
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tokio::signal;
@@ -29,7 +28,6 @@ use crate::db::setup_database_pool;
 
 pub mod db;
 pub mod error;
-pub mod fileserv;
 pub mod handlers;
 pub mod ws;
 
@@ -94,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
         });
     }
 
-    let app = routes().with_state(state);
+    let app = routes(state.clone());
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(
@@ -108,7 +106,8 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn routes() -> Router<ServerState> {
+fn routes(state: ServerState) -> Router {
+    let routes = generate_route_list(App);
     Router::new()
         .route(
             "/api/leptos/*fn_name",
@@ -121,8 +120,14 @@ fn routes() -> Router<ServerState> {
             "/api/download",
             post(handlers::download::add_video_to_queue),
         )
-        .leptos_routes_with_handler(generate_route_list(App), get(leptos_routes_handler))
-        .fallback(file_and_error_handler)
+        // .leptos_routes(generate_route_list(App), get(leptos_routes_handler))
+        .leptos_routes(&state, routes, {
+            let leptos_options = state.leptos_options.clone();
+            move || ui::shell(leptos_options.clone())
+        })
+        .fallback(leptos_axum::file_and_error_handler::<ServerState, _>(
+            ui::shell,
+        ))
         .layer(
             ServiceBuilder::new()
                 .layer(
@@ -133,6 +138,7 @@ fn routes() -> Router<ServerState> {
                 )
                 .layer(TimeoutLayer::new(Duration::from_secs(3))),
         )
+        .with_state(state)
 }
 
 async fn shutdown_signal() {
@@ -165,25 +171,9 @@ async fn server_fn_handler(
     leptos_axum::handle_server_fns_with_context(
         move || {
             provide_context(app_state.clone());
-            provide_context(app_state.pool.clone());
+            // provide_context(app_state.pool.clone());
         },
         request,
     )
     .await
-}
-
-pub async fn leptos_routes_handler(
-    State(app_state): State<ServerState>,
-    State(options): State<LeptosOptions>,
-    request: Request<Body>,
-) -> axum::response::Response {
-    let handler = leptos_axum::render_app_async_with_context(
-        move || {
-            provide_context(app_state.clone());
-            provide_context(app_state.pool.clone());
-        },
-        move || ui::shell(options.clone()),
-    );
-
-    handler(request).await.into_response()
 }

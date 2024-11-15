@@ -1606,6 +1606,20 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18db9eec46b6c870bf84281dd8065fb207b23a9c1c0cb367c49a919a61a38dec"
 dependencies = [
+ "icondata_bs",
+ "icondata_core",
+ "icondata_fi",
+ "icondata_lu",
+ "icondata_oc",
+ "icondata_tb",
+]
+
+[[package]]
+name = "icondata_bs"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67940e592b0b8df8d7adc055c8542d135ce1d7d6ad01d8fb8de9405ebfc21c2e"
+dependencies = [
  "icondata_core",
 ]
 
@@ -1614,6 +1628,42 @@ name = "icondata_core"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c97be924215abd5e630d84e95a47c710138a6559b4c55039f4f33aa897fa859"
+
+[[package]]
+name = "icondata_fi"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1a4e81557c205a12ac051046595bb616f388537468987f7ee8960f897cdc538"
+dependencies = [
+ "icondata_core",
+]
+
+[[package]]
+name = "icondata_lu"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d552c45cc3ab1d1bf88cc0201004eb92418141e5454e9e0e46c4b4a4faf66248"
+dependencies = [
+ "icondata_core",
+]
+
+[[package]]
+name = "icondata_oc"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8be19499912a05d5db89ccb88dbe3c459ca4100bda3dbcbddff69f2dcf71d305"
+dependencies = [
+ "icondata_core",
+]
+
+[[package]]
+name = "icondata_tb"
+version = "0.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f2b8d8e2047546285805795e6d3cb6e820a52bb008e15942e11353c7ba659f2"
+dependencies = [
+ "icondata_core",
+]
 
 [[package]]
 name = "icu_collections"
@@ -1947,6 +1997,15 @@ dependencies = [
  "serde",
  "syn 2.0.87",
  "walkdir",
+]
+
+[[package]]
+name = "leptos_icons"
+version = "0.3.1"
+source = "git+https://github.com/PenguinWithATie/leptos-icons?branch=main#5eb032e13f40934c4c67d11a653b6f4e03553668"
+dependencies = [
+ "icondata_core",
+ "leptos",
 ]
 
 [[package]]
@@ -4258,6 +4317,7 @@ dependencies = [
  "icondata",
  "leptos",
  "leptos_axum",
+ "leptos_icons",
  "leptos_meta",
  "leptos_router",
  "log",
