@@ -4,7 +4,7 @@ CREATE TABLE videos (
     title text NOT NULL,
     youtube_id text,
     url text NOT NULL,
-    file_path text,
+    file_path text NOT NULL,
     metadata jsonb,
 
     created_at timestamptz NOT NULL default now(),

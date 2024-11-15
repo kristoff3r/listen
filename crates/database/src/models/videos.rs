@@ -19,7 +19,7 @@ pub struct Video {
     pub youtube_id: Option<String>,
     pub url: String,
     #[convert(into(api::Video, skip))]
-    pub file_path: Option<String>,
+    pub file_path: String,
     pub metadata: Option<serde_json::Value>,
 
     pub created_at: OffsetDateTime,
@@ -44,10 +44,12 @@ impl Video {
         youtube_id: &str,
         url: &str,
         metadata: serde_json::Value,
+        file_path: &str,
     ) -> Result<(Self, Download)> {
         conn.transaction(|conn| {
             async move {
-                let video = Self::create_raw(conn, title, youtube_id, url, metadata).await?;
+                let video =
+                    Self::create_raw(conn, title, youtube_id, url, metadata, file_path).await?;
                 let download = Download::create(conn, video.video_id).await?;
 
                 Ok((video, download))
@@ -62,6 +64,7 @@ impl Video {
         youtube_id: &str,
         url: &str,
         metadata: serde_json::Value,
+        file_path: &str,
     ) -> Result<Self> {
         use crate::schema::videos::dsl as v;
 
@@ -71,7 +74,7 @@ impl Video {
                 youtube_id: Some(youtube_id),
                 url,
                 metadata: Some(metadata),
-                file_path: None,
+                file_path: Some(file_path),
             })
             .on_conflict_do_nothing()
             .get_result(conn)

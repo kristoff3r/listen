@@ -31,10 +31,16 @@ pub async fn get_video(
 }
 
 pub async fn play_video(
+    State(pool): State<PgPool>,
     State(videos_dir): State<VideosDir>,
-    Path(id): Path<i32>,
+    Path(video_id): Path<VideoId>,
 ) -> Result<impl IntoResponse> {
-    let path = videos_dir.join(format!("{id}.mp4"));
+    let mut conn = pool.get().await?;
+    let Some(video) = database::models::Video::get_by_id(&mut conn, video_id).await? else {
+        return Err(ListenErrorType::NotFound.into());
+    };
+
+    let path = videos_dir.join(video.file_path);
     let header = [(header::CONTENT_TYPE, "video/mp4")];
     let file = File::open(path).await?;
     info!("serving file with size {:?}", file.metadata().await?.len());

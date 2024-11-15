@@ -38,12 +38,15 @@ pub async fn add_video_to_queue(
 
     let mut conn = pool.get().await?;
 
+    let file_path = format!("{}.mp4", metadata.id);
+
     let (video, _download) = database::models::Video::create(
         &mut conn,
         metadata.title.as_deref().unwrap(),
         &metadata.id,
         &req.url,
         serde_json::to_value(&metadata)?,
+        &file_path,
     )
     .await?;
 
@@ -80,7 +83,7 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
         };
 
         let videos_dir = videos_dir.clone();
-        let out_path = videos_dir.join(format!("{}.mp4", cur_video.video_id));
+        let out_path = videos_dir.join(cur_video.file_path);
         if out_path.exists() && !cur_download.force {
             info!(
                 "Video {video_id} {title} already exists, skipping",

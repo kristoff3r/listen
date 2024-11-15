@@ -75,7 +75,7 @@ diesel::table! {
         title -> Text,
         youtube_id -> Nullable<Text>,
         url -> Text,
-        file_path -> Nullable<Text>,
+        file_path -> Text,
         metadata -> Nullable<Jsonb>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
