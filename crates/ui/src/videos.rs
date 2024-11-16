@@ -2,7 +2,7 @@ use api::{Video, VideoId};
 use leptos::prelude::*;
 
 #[component]
-pub fn VideosPage() -> impl IntoView {
+pub fn videos_page() -> impl IntoView {
     let action = ServerAction::<GetVideos>::new();
     let videos = Resource::new(move || action.version().get(), |_| get_videos());
     let selected = RwSignal::new(None);

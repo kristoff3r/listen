@@ -34,6 +34,7 @@ gloo-storage = "0.3.0"
 headers = "0.4.0"
 http = "1"
 icondata = { version = "0.4.0", default-features = false, features = [
+    "ant-design-icons",
     "bootstrap-icons",
     "github-octicons",
     "tabler-icons",
@@ -41,6 +42,7 @@ icondata = { version = "0.4.0", default-features = false, features = [
     "feather",
 ] }
 leptos = { version = "0.7.0-rc1", features = ["nightly"] }
+leptos-use = "0.14.0-rc3"
 leptos_axum = "0.7.0-rc1"
 leptos_icons = { git = "https://github.com/PenguinWithATie/leptos-icons", branch = "main" }
 leptos_meta = "0.7.0-rc1"
