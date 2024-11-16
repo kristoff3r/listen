@@ -14,10 +14,7 @@ pub struct Uuid<T> {
 impl<T> Copy for Uuid<T> {}
 impl<T> Clone for Uuid<T> {
     fn clone(&self) -> Self {
-        Self {
-            uuid: self.uuid.clone(),
-            marker: PhantomData,
-        }
+        *self
     }
 }
 

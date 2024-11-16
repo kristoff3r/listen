@@ -169,7 +169,7 @@ async fn download_file(
         Command::new("ffmpeg")
             .arg("-i")
             .arg(f.path())
-            .args(&[
+            .args([
                 "-y",
                 "-c:v",
                 "libx264",

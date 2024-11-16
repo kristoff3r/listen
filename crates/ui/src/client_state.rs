@@ -9,6 +9,12 @@ pub struct ClientState {
     pub auth_state: AuthState,
 }
 
+impl Default for ClientState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ClientState {
     pub fn new() -> Self {
         Self {
