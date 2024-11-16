@@ -22,10 +22,10 @@ pub fn App() -> impl IntoView {
     provide_context(ClientState::new());
 
     view! {
-        <Stylesheet id="leptos" href="/pkg/listen.css"/>
-        <Title text="Listen"/>
-        <Link rel="icon" href="favicon.png" sizes="32x32"/>
-        <ListenRoutes/>
+        <Stylesheet id="leptos" href="/pkg/listen.css" />
+        <Title text="Listen" />
+        <Link rel="icon" href="favicon.png" sizes="32x32" />
+        <ListenRoutes />
     }
 }
 
@@ -34,14 +34,14 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
         <!DOCTYPE html>
         <html lang="en">
             <head>
-                <meta charset="utf-8"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <AutoReload options=options.clone()/>
-                <HydrationScripts options/>
-                <MetaTags/>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <AutoReload options=options.clone() />
+                <HydrationScripts options />
+                <MetaTags />
             </head>
             <body>
-                <App/>
+                <App />
             </body>
         </html>
     }

@@ -79,3 +79,19 @@ pub struct OidcMapping {
     pub oidc_issuer_id: String,
     pub user_id: UserId,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct AuthContext {
+    // pub user: User,
+    // pub user_session: UserSession,
+}
+
+#[derive(strum::Display, strum::EnumString, Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(tag = "error", content = "message", rename_all = "snake_case")]
+pub enum ApiError {
+    NotFound,
+    NotAuthorized,
+    MissingAuthToken,
+    InternalServerError,
+    Unknown(String),
+}

@@ -1,8 +1,8 @@
+use api::ApiError;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
 const AUTH_TOKEN_KEY: &str = "auth_token";
-const ROLES_KEY: &str = "roles";
 
 #[derive(Copy, Clone)]
 pub struct ClientState {
@@ -29,12 +29,7 @@ pub fn use_client_state() -> ClientState {
 
 pub fn use_auth_token() -> Signal<Option<AuthToken>> {
     let auth_state = use_client_state().auth_state;
-    Signal::derive(move || auth_state.0.get().0)
-}
-
-pub fn use_roles() -> Signal<Vec<String>> {
-    let auth_state = use_client_state().auth_state;
-    Signal::derive(move || auth_state.0.get().1)
+    Signal::derive(move || auth_state.0.get())
 }
 
 /// Possibly non-existent auth token.
@@ -42,7 +37,7 @@ pub fn use_roles() -> Signal<Vec<String>> {
 /// The auth token may or may not be present in local storage, so this
 /// struct captures that detail.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct AuthState(RwSignal<(Option<AuthToken>, Vec<String>)>);
+pub struct AuthState(RwSignal<Option<AuthToken>>);
 
 #[cfg(feature = "ssr")]
 mod impls {
@@ -84,35 +79,35 @@ mod impls {
     }
 }
 use impls::*;
+use server_fn::{
+    client::{browser::BrowserClient, Client},
+    request::browser::BrowserRequest,
+    response::browser::BrowserResponse,
+};
 
 impl AuthState {
     pub fn load_from_storage() -> Self {
         if let Some(auth_token) = get_local_storage(AUTH_TOKEN_KEY) {
-            if let Some(roles) = get_local_storage(ROLES_KEY) {
-                return Self(RwSignal::new((Some(auth_token), roles)));
-            }
+            return Self(RwSignal::new(Some(auth_token)));
         }
 
         Self::clear_storage();
-        Self(RwSignal::new((None, Vec::new())))
+        Self(RwSignal::new(None))
     }
 
     fn clear_storage() {
         delete_local_storage(AUTH_TOKEN_KEY);
-        delete_local_storage(ROLES_KEY);
     }
 
     /// Clears from local storage and sets to none
     pub fn clear(&self) {
         Self::clear_storage();
-        self.0.set((None, Vec::new()));
+        self.0.set(None);
     }
 
-    pub fn set(&self, auth_token: AuthToken, roles: Vec<String>) {
-        if set_local_storage(AUTH_TOKEN_KEY, &auth_token).is_ok()
-            && set_local_storage(ROLES_KEY, &roles).is_ok()
-        {
-            self.0.set((Some(auth_token), roles));
+    pub fn set(&self, auth_token: AuthToken) {
+        if set_local_storage(AUTH_TOKEN_KEY, &auth_token).is_ok() {
+            self.0.set(Some(auth_token));
         } else {
             self.clear();
         }
@@ -121,10 +116,34 @@ impl AuthState {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct AuthToken(String);
+pub struct AuthToken(pub String);
 
 impl std::fmt::Display for AuthToken {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+pub struct AuthClient;
+
+impl Client<ApiError> for AuthClient {
+    type Request = BrowserRequest;
+    type Response = BrowserResponse;
+
+    fn send(
+        req: Self::Request,
+    ) -> impl std::future::Future<Output = Result<Self::Response, ServerFnError<ApiError>>> + Send
+    {
+        async move {
+            if let Some(auth_token) = use_auth_token().get_untracked() {
+                req.headers()
+                    .append("Authorization", &format!("Bearer {auth_token}"));
+                BrowserClient::send(req).await
+            } else {
+                Err(ServerFnError::WrappedServerError(
+                    ApiError::MissingAuthToken,
+                ))
+            }
+        }
     }
 }

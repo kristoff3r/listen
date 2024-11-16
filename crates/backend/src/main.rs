@@ -1,9 +1,11 @@
 use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use anyhow::Context;
+use auth::validate_auth;
 use axum::{
     body::Body,
     extract::{Path, Request, State},
+    middleware::map_request_with_state,
     response::IntoResponse,
     routing::{get, post},
     Router,
@@ -26,6 +28,7 @@ use ui::{
 
 use crate::db::setup_database_pool;
 
+mod auth;
 pub mod db;
 pub mod error;
 pub mod handlers;
@@ -71,6 +74,9 @@ async fn main() -> anyhow::Result<()> {
     let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
+    let jwt_secret = b"HEFJKSHFKJSHFKJLASEHFLKWS";
+    let jwt_encoding_key = jsonwebtoken::EncodingKey::from_secret(jwt_secret);
+    let jwt_decoding_key = jsonwebtoken::DecodingKey::from_secret(jwt_secret);
     let state = ServerState {
         pool,
         leptos_options,
@@ -79,6 +85,8 @@ async fn main() -> anyhow::Result<()> {
                 .canonicalize()
                 .unwrap(),
         ),
+        jwt_encoding_key,
+        jwt_decoding_key,
     };
 
     info!("listening on {}", addr);
@@ -108,18 +116,11 @@ async fn main() -> anyhow::Result<()> {
 
 fn routes(state: ServerState) -> Router {
     let routes = generate_route_list(App);
+    println!("{routes:?}");
     Router::new()
-        .route(
-            "/api/leptos/*fn_name",
-            get(server_fn_handler).post(server_fn_handler),
-        )
+        .nest("/api", api_routes())
+        .layer(map_request_with_state(state.clone(), validate_auth))
         .route("/health_check", get(|| async { "" }))
-        .route("/api/videos/:id", get(handlers::videos::get_video))
-        .route("/api/videos/:id/play", get(handlers::videos::play_video))
-        .route(
-            "/api/download",
-            post(handlers::download::add_video_to_queue),
-        )
         // .leptos_routes(generate_route_list(App), get(leptos_routes_handler))
         .leptos_routes(&state, routes, {
             let leptos_options = state.leptos_options.clone();
@@ -139,6 +140,15 @@ fn routes(state: ServerState) -> Router {
                 .layer(TimeoutLayer::new(Duration::from_secs(3))),
         )
         .with_state(state)
+}
+
+fn api_routes() -> Router<ServerState> {
+    Router::new()
+        .route("/*fn_name", get(server_fn_handler).post(server_fn_handler))
+        .route("/test", get(|| async { "hello!\n" }))
+        .route("/videos/:id", get(handlers::videos::get_video))
+        .route("/videos/:id/play", get(handlers::videos::play_video))
+        .route("/download", post(handlers::download::add_video_to_queue))
 }
 
 async fn shutdown_signal() {

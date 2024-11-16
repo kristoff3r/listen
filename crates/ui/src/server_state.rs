@@ -11,6 +11,8 @@ pub struct ServerState {
     pub leptos_options: LeptosOptions,
     pub pool: Pool<AsyncPgConnection>,
     pub videos_dir: VideosDir,
+    pub jwt_encoding_key: jsonwebtoken::EncodingKey,
+    pub jwt_decoding_key: jsonwebtoken::DecodingKey,
 }
 
 #[derive(Clone, Debug)]

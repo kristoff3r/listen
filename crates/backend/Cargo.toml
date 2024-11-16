@@ -7,6 +7,7 @@ version.workspace = true
 [dependencies]
 api = { path = "../api" }
 database = { path = "../database" }
+ui = { path = "../ui", default-features = false, features = ["ssr"] }
 
 anyhow = { workspace = true, features = ["backtrace"] }
 axum = { workspace = true, features = ["macros", "ws"] }
@@ -19,11 +20,13 @@ dotenvy.workspace = true
 futures.workspace = true
 futures-util = { workspace = true, features = ["sink", "std"] }
 headers.workspace = true
+jsonwebtoken.workspace = true
 leptos = { workspace = true, features = ["ssr"] }
 leptos_axum.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 strum = { workspace = true, features = ["strum_macros", "derive"] }
+tempfile.workspace = true
 time = { workspace = true, features = ["serde"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite.workspace = true
@@ -34,6 +37,3 @@ tracing.workspace = true
 tracing-error.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 youtube_dl.workspace = true
-
-tempfile = "3.14.0"
-ui = { path = "../ui", default-features = false, features = ["ssr"] }

@@ -1,39 +1,24 @@
 use std::fmt::{self, Debug, Display};
 
+use api::ApiError;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
-use strum::Display;
 use tracing_error::SpanTrace;
 
 pub type Result<T> = std::result::Result<T, ListenError>;
 
 pub struct ListenError {
-    pub error_type: ListenErrorType,
+    pub api_error: ApiError,
     pub inner: anyhow::Error,
     pub context: SpanTrace,
-}
-
-impl<T> From<T> for ListenError
-where
-    T: Into<anyhow::Error>,
-{
-    fn from(t: T) -> Self {
-        let cause = t.into();
-        ListenError {
-            error_type: ListenErrorType::Unknown(format!("{}", &cause)),
-            inner: cause,
-            context: SpanTrace::capture(),
-        }
-    }
 }
 
 impl Debug for ListenError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ListenError")
-            .field("message", &self.error_type)
+            .field("message", &self.api_error)
             .field("inner", &self.inner)
             .field("context", &self.context)
             .finish()
@@ -42,7 +27,7 @@ impl Debug for ListenError {
 
 impl Display for ListenError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: ", &self.error_type)?;
+        write!(f, "{}: ", &self.api_error)?;
         writeln!(f, "{:?}", self.inner)?;
         fmt::Display::fmt(&self.context, f)
     }
@@ -55,56 +40,58 @@ impl IntoResponse for ListenError {
         {
             StatusCode::NOT_FOUND
         } else {
-            match self.error_type {
-                ListenErrorType::NotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            match self.api_error {
+                ApiError::NotFound => StatusCode::NOT_FOUND,
+                ApiError::NotAuthorized => StatusCode::UNAUTHORIZED,
+                ApiError::MissingAuthToken => StatusCode::UNAUTHORIZED,
+                ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+                ApiError::Unknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
             }
         };
 
-        let body = serde_json::to_vec(&self.error_type).unwrap();
+        let body = serde_json::to_vec(&self.api_error).unwrap();
         (status, body).into_response()
     }
 }
 
-#[derive(Display, Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(tag = "error", content = "message", rename_all = "snake_case")]
-pub enum ListenErrorType {
-    NotFound,
-    Unknown(String),
-}
-
-impl From<ListenErrorType> for ListenError {
-    fn from(error_type: ListenErrorType) -> Self {
-        let inner = anyhow::anyhow!("{}", error_type);
+impl From<ApiError> for ListenError {
+    fn from(api_error: ApiError) -> Self {
+        let inner = anyhow::anyhow!("{}", api_error);
         ListenError {
-            error_type,
+            api_error,
             inner,
             context: SpanTrace::capture(),
         }
     }
 }
 
-pub trait ListenErrorExt<T, E: Into<anyhow::Error>> {
-    fn with_error_type(self, error_type: ListenErrorType) -> Result<T>;
+pub trait ListenErrorExt<T, E: Into<anyhow::Error>>: Sized {
+    fn with_api_error(self, error_type: ApiError) -> Result<T>;
+    fn with_internal_server_error(self) -> Result<T> {
+        self.with_api_error(api::ApiError::InternalServerError)
+    }
 }
 
 impl<T, E: Into<anyhow::Error>> ListenErrorExt<T, E> for std::result::Result<T, E> {
-    fn with_error_type(self, error_type: ListenErrorType) -> Result<T> {
+    fn with_api_error(self, error_type: ApiError) -> Result<T> {
         self.map_err(|error| ListenError {
-            error_type,
+            api_error: error_type,
             inner: error.into(),
             context: SpanTrace::capture(),
         })
     }
 }
-pub trait ListenErrorExt2<T> {
-    fn with_error_type(self, error_type: ListenErrorType) -> Result<T>;
+pub trait ListenErrorExt2<T>: Sized {
+    fn with_api_error(self, error_type: ApiError) -> Result<T>;
+    fn with_internal_server_error(self) -> Result<T> {
+        self.with_api_error(api::ApiError::InternalServerError)
+    }
 }
 
 impl<T> ListenErrorExt2<T> for Result<T> {
-    fn with_error_type(self, error_type: ListenErrorType) -> Result<T> {
+    fn with_api_error(self, error_type: ApiError) -> Result<T> {
         self.map_err(|mut e| {
-            e.error_type = error_type;
+            e.api_error = error_type;
             e
         })
     }

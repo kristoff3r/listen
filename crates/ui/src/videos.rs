@@ -1,5 +1,7 @@
-use api::{Video, VideoId};
+use api::{ApiError, Video, VideoId};
 use leptos::prelude::*;
+
+use crate::client_state::AuthClient;
 
 #[component]
 pub fn videos_page() -> impl IntoView {
@@ -78,12 +80,12 @@ pub fn embed_youtube(youtube_id: String) -> impl IntoView {
     }
 }
 
-#[server(GetVideos, "/api/leptos")]
-pub async fn get_videos() -> Result<Vec<Video>, ServerFnError> {
+#[server(client = AuthClient)]
+pub async fn get_videos() -> Result<Vec<Video>, ServerFnError<ApiError>> {
     let pool = expect_context::<crate::server_state::ServerState>().pool;
-    let mut conn = pool.get().await?;
+    let mut conn = pool.get().await.unwrap();
 
-    let videos = database::models::Video::list(&mut conn).await?;
+    let videos = database::models::Video::list(&mut conn).await.unwrap();
 
     Ok(videos.into_iter().map(Into::into).collect())
 }

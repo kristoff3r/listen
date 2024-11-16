@@ -1,6 +1,7 @@
+use api::ApiError;
 use leptos::{either::EitherOf3, prelude::*};
 
-use crate::loading::Loading;
+use crate::{client_state::AuthClient, loading::Loading};
 
 #[component]
 pub fn DownloadsPage() -> impl IntoView {
@@ -8,15 +9,15 @@ pub fn DownloadsPage() -> impl IntoView {
     let downloads = Resource::new(move || action.version().get(), |_| get_downloads());
 
     view! {
-        <Transition fallback=move || view! { <Loading/> }>
+        <Transition fallback=move || view! { <Loading /> }>
             <div class="flex w-full min-h-screen">
                 <div class="w-[20%] bg-blue-400">
                     {move || match downloads.get() {
-                        Some(Ok(downloads)) => EitherOf3::A(view! { <DownloadList downloads/> }),
+                        Some(Ok(downloads)) => EitherOf3::A(view! { <DownloadList downloads /> }),
                         Some(Err(e)) => {
                             EitherOf3::B(view! { {format!("error loading: {e}").into_view()} })
                         }
-                        _ => EitherOf3::C(view! { <Loading/> }),
+                        _ => EitherOf3::C(view! { <Loading /> }),
                     }}
 
                 </div>
@@ -29,7 +30,7 @@ pub fn DownloadsPage() -> impl IntoView {
 pub fn download_list(downloads: GetDownloadsResult) -> impl IntoView {
     let entries = downloads
         .into_iter()
-        .map(|(video, downloads)| view! { <DownloadListEntry video downloads/> })
+        .map(|(video, downloads)| view! { <DownloadListEntry video downloads /> })
         .collect_view();
     view! { <div class="flex flex-col gap-2">{entries}</div> }
 }
@@ -51,15 +52,17 @@ pub fn download_list_entry(video: api::Video, downloads: Vec<api::Download>) -> 
 
 type GetDownloadsResult = Vec<(api::Video, Vec<api::Download>)>;
 
-#[server(GetDownloads, "/api/leptos")]
-pub async fn get_downloads() -> Result<GetDownloadsResult, ServerFnError> {
+#[server(client = AuthClient)]
+pub async fn get_downloads() -> Result<GetDownloadsResult, ServerFnError<ApiError>> {
     use diesel::GroupedBy;
 
     let pool = expect_context::<crate::server_state::ServerState>().pool;
-    let mut conn = pool.get().await?;
+    let mut conn = pool.get().await.unwrap();
 
-    let videos = database::models::Video::list(&mut conn).await?;
-    let downloads = database::models::Download::list_for_videos(&mut conn, &videos).await?;
+    let videos = database::models::Video::list(&mut conn).await.unwrap();
+    let downloads = database::models::Download::list_for_videos(&mut conn, &videos)
+        .await
+        .unwrap();
 
     let res = downloads
         .grouped_by(&videos)

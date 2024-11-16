@@ -1,4 +1,4 @@
-use api::UserId;
+use api::{UserId, UserSessionId};
 use diesel::{
     delete, dsl::now, insert_into, prelude::*, update, QueryDsl, Selectable, SelectableHelper,
 };
@@ -8,7 +8,7 @@ use diesel_async::{
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
-use super::{OidcMapping, Result};
+use super::{OidcMapping, Result, UserSession};
 
 #[derive(Clone, Debug, PartialEq, Queryable, Selectable, Identifiable, StructuralConvert)]
 #[diesel(primary_key(user_id))]
@@ -86,6 +86,23 @@ impl User {
     pub async fn get_by_id(conn: &mut AsyncPgConnection, user_id: UserId) -> Result<Option<Self>> {
         use crate::schema::users::dsl as u;
         let result = u::users.find(user_id).first(conn).await.optional()?;
+        Ok(result)
+    }
+
+    pub async fn get_by_user_session_id(
+        conn: &mut AsyncPgConnection,
+        user_session_id: UserSessionId,
+    ) -> Result<Option<(Self, UserSession)>> {
+        use crate::schema::{user_sessions::dsl as s, users::dsl as u};
+
+        let result = s::user_sessions
+            .inner_join(u::users)
+            .filter(s::user_session_id.eq(user_session_id))
+            .select((Self::as_select(), UserSession::as_select()))
+            .first(conn)
+            .await
+            .optional()?;
+
         Ok(result)
     }
 

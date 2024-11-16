@@ -36,11 +36,13 @@ http = "1"
 icondata = { version = "0.4.0", default-features = false, features = [
     "ant-design-icons",
     "bootstrap-icons",
+    "box-icons",
     "github-octicons",
     "tabler-icons",
     "lucide",
     "feather",
 ] }
+jsonwebtoken = "9.3.0"
 leptos = { version = "0.7.0-rc1", features = ["nightly"] }
 leptos-use = "0.14.0-rc3"
 leptos_axum = "0.7.0-rc1"
@@ -56,7 +58,8 @@ reqwest = { version = "0.12.8", default-features = false, features = [
 serde = "1.0"
 serde_json = "1.0"
 structural-convert = "0.13.0"
-strum = "0.26.3"
+strum = { version = "0.26.3", features = ["derive"] }
+tempfile = "3.14.0"
 thiserror = "2.0.3"
 time = "0.3.36"
 tokio = "1.41.0"
@@ -74,6 +77,9 @@ youtube_dl = { version = "0.10.0", features = [
     "downloader-rustls-tls",
     "tokio",
 ] }
+
+[patch.crates-io]
+leptos_axum = { git = "https://github.com/TethysSvensson/leptos.git", branch = "tethys/without-server-fn" }
 
 [profile.wasm-release]
 codegen-units = 1

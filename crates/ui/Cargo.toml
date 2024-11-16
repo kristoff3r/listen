@@ -30,6 +30,8 @@ reqwest = { workspace = true, default-features = false, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
 web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
+strum.workspace = true
+jsonwebtoken.workspace = true
 
 [features]
 default = []

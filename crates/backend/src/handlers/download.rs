@@ -15,7 +15,7 @@ use ui::server_state::VideosDir;
 use youtube_dl::YoutubeDl;
 
 use crate::{
-    error::{ListenError, Result},
+    error::{ListenError, ListenErrorExt, Result},
     PgPool,
 };
 
@@ -36,7 +36,7 @@ pub async fn add_video_to_queue(
         .into_single_video()
         .expect("playlist not supported");
 
-    let mut conn = pool.get().await?;
+    let mut conn = pool.get().await.with_internal_server_error()?;
 
     let file_path = format!("{}.mp4", metadata.id);
 
@@ -45,10 +45,11 @@ pub async fn add_video_to_queue(
         metadata.title.as_deref().unwrap(),
         &metadata.id,
         &req.url,
-        serde_json::to_value(&metadata)?,
+        serde_json::to_value(&metadata).with_internal_server_error()?,
         &file_path,
     )
-    .await?;
+    .await
+    .with_internal_server_error()?;
 
     info!(
         "Added video: {youtube_id} {title:?} as id {video_id} to queue",
@@ -64,9 +65,11 @@ pub async fn redownload_video(
     State(pool): State<PgPool>,
     Path(video_id): Path<VideoId>,
 ) -> Result<impl IntoResponse> {
-    let mut conn = pool.get().await?;
+    let mut conn = pool.get().await.with_internal_server_error()?;
 
-    database::models::Download::create(&mut conn, video_id).await?;
+    database::models::Download::create(&mut conn, video_id)
+        .await
+        .with_internal_server_error()?;
 
     Ok(())
 }
@@ -75,9 +78,12 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
     info!("Starting download queue handler");
 
     loop {
-        let mut conn = pool.get().await?;
+        let mut conn = pool.get().await.with_internal_server_error()?;
 
-        let Some((cur_video, cur_download)) = Download::get_next_download(&mut conn).await? else {
+        let Some((cur_video, cur_download)) = Download::get_next_download(&mut conn)
+            .await
+            .with_internal_server_error()?
+        else {
             tokio::time::sleep(Duration::from_secs(5)).await;
             continue;
         };
@@ -96,7 +102,8 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
                 DownloadStatus::Finished,
                 "video already exists",
             )
-            .await?;
+            .await
+            .with_internal_server_error()?;
             continue;
         }
 
@@ -106,12 +113,13 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
             title = cur_video.title
         );
         let res = tokio::task::spawn(async move {
-            let tmp_dir = tempfile::tempdir_in(&*videos_dir)?;
+            let tmp_dir = tempfile::tempdir_in(&*videos_dir).with_internal_server_error()?;
             download_file(cur_video.url, tmp_dir.path(), &out_path).await?;
 
             Ok::<_, ListenError>(())
         })
-        .await?;
+        .await
+        .with_internal_server_error()?;
 
         if let Err(e) = res {
             warn!(
@@ -130,7 +138,8 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
                 },
                 &format!("download failed: {e}"),
             )
-            .await?;
+            .await
+            .with_internal_server_error()?;
         } else {
             info!(
                 "Download {video_id} {title} finished",
@@ -143,7 +152,8 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
                 DownloadStatus::Finished,
                 "",
             )
-            .await?;
+            .await
+            .with_internal_server_error()?;
         }
     }
 }
@@ -158,10 +168,11 @@ async fn download_file(
         .format("bestvideo*[height<=1080]+bestaudio/best[height<=1080]")
         .download_to_async(&tmp_dir)
         .await
-        .context("download failed")?;
+        .context("download failed")
+        .with_internal_server_error()?;
 
-    for f in tmp_dir.read_dir()? {
-        let f = f?;
+    for f in tmp_dir.read_dir().with_internal_server_error()? {
+        let f = f.with_internal_server_error()?;
         info!(
             "Running ffmpeg on {}",
             f.path().file_name().unwrap().to_string_lossy()
@@ -191,7 +202,8 @@ async fn download_file(
             .arg(out_path)
             .status()
             .await
-            .context("ffmpeg failed")?;
+            .context("ffmpeg failed")
+            .with_internal_server_error()?;
     }
 
     Ok(())
