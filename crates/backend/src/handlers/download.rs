@@ -4,7 +4,6 @@ use anyhow::Context;
 use api::VideoId;
 use axum::{
     extract::{Path, State},
-    response::IntoResponse,
     Json,
 };
 use database::models::{Download, DownloadStatus};
@@ -27,7 +26,7 @@ pub struct DownloadRequest {
 pub async fn add_video_to_queue(
     State(pool): State<PgPool>,
     Json(req): Json<DownloadRequest>,
-) -> Result<impl IntoResponse> {
+) -> Result<Json<()>> {
     let metadata = YoutubeDl::new(&req.url)
         .socket_timeout("15")
         .run_async()
@@ -58,20 +57,47 @@ pub async fn add_video_to_queue(
         video_id = video.video_id
     );
 
-    Ok(())
+    Ok(Json(()))
 }
 
 pub async fn redownload_video(
     State(pool): State<PgPool>,
     Path(video_id): Path<VideoId>,
-) -> Result<impl IntoResponse> {
+) -> Result<Json<()>> {
     let mut conn = pool.get().await.with_internal_server_error()?;
 
     database::models::Download::create(&mut conn, video_id)
         .await
         .with_internal_server_error()?;
 
-    Ok(())
+    Ok(Json(()))
+}
+
+pub async fn list_downloads(
+    State(pool): State<PgPool>,
+) -> Result<Json<Vec<(api::Video, Vec<api::Download>)>>> {
+    use diesel::GroupedBy;
+
+    let mut conn = pool.get().await.with_internal_server_error()?;
+
+    let videos = database::models::Video::list(&mut conn).await.unwrap();
+    let downloads = database::models::Download::list_for_videos(&mut conn, &videos)
+        .await
+        .unwrap();
+
+    let res = downloads
+        .grouped_by(&videos)
+        .into_iter()
+        .zip(videos)
+        .map(|(downloads, video)| {
+            (
+                video.into(),
+                downloads.into_iter().map(Into::into).collect(),
+            )
+        })
+        .collect::<Vec<(api::Video, Vec<api::Download>)>>();
+
+    Ok(Json(res))
 }
 
 pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Result<()> {

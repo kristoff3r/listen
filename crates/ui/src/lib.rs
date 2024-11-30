@@ -1,8 +1,10 @@
+use backend::Backend;
 use client_state::ClientState;
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, Link, MetaTags, Stylesheet, Title};
 use routes::ListenRoutes;
 
+mod backend;
 pub mod client_state;
 pub mod downloads;
 pub mod errors;
@@ -20,6 +22,7 @@ pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
     provide_context(ClientState::new());
+    provide_context(Backend::new());
 
     view! {
         <Stylesheet id="leptos" href="/pkg/listen.css" />

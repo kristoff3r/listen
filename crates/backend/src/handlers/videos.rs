@@ -42,17 +42,13 @@ pub async fn play_video(
     State(videos_dir): State<VideosDir>,
     Path(video_id): Path<VideoId>,
 ) -> Result<impl IntoResponse> {
-    info!("Hello?");
     let mut conn = pool.get().await.with_internal_server_error()?;
     let Some(video) = database::models::Video::get_by_id(&mut conn, video_id)
         .await
         .with_internal_server_error()?
     else {
-        info!("Are we here?");
         return Err(ApiError::NotFound.into());
     };
-
-    info!("Are we here then?");
 
     info!("videos_dir={videos_dir}", videos_dir = videos_dir.display());
     info!("file_path={file_path}", file_path = video.file_path);
@@ -75,4 +71,16 @@ pub async fn play_video(
     );
     let stream = ReaderStream::new(file);
     Ok((header, Body::from_stream(stream)))
+}
+
+pub async fn list_videos(State(pool): State<PgPool>) -> Result<Json<Vec<api::Video>>> {
+    let mut conn = pool.get().await.with_internal_server_error()?;
+
+    let videos = database::models::Video::list(&mut conn).await.unwrap();
+    let videos = videos
+        .into_iter()
+        .map(From::from)
+        .collect::<Vec<api::Video>>();
+
+    Ok(Json(videos))
 }

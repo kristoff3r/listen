@@ -15,7 +15,7 @@ diesel-async = { workspace = true, features = [
     "postgres",
     "deadpool",
 ], optional = true }
-gloo-net = { workspace = true, features = ["http"] }
+gloo-net = { workspace = true, features = ["http", "json"] }
 gloo-storage.workspace = true
 http.workspace = true
 icondata.workspace = true

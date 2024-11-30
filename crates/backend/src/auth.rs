@@ -1,15 +1,11 @@
-use api::{ApiError, AuthContext, UserSessionId};
+use api::{ApiError, UserSessionId};
 use axum::{
-    extract::{FromRequestParts, Request, State},
-    http::{header::AUTHORIZATION, request::Parts, HeaderMap},
+    extract::FromRequestParts,
+    http::{header::AUTHORIZATION, request::Parts},
 };
-use diesel_async::AsyncPgConnection;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::{ListenError, ListenErrorExt},
-    PgPool,
-};
+use crate::error::ListenError;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct AuthBearer(pub String);
@@ -47,6 +43,7 @@ pub struct Claims {
     sub: UserSessionId,
 }
 
+/*
 pub async fn validate_auth(
     State(jwt_decoding_key): State<jsonwebtoken::DecodingKey>,
     State(pool): State<PgPool>,
@@ -110,3 +107,4 @@ fn get_bearer_token(headers: &HeaderMap) -> Option<&str> {
 
     Some(right)
 }
+ */

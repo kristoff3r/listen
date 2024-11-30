@@ -1,17 +1,12 @@
 use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use anyhow::Context;
-use auth::validate_auth;
 use axum::{
-    body::Body,
-    extract::{Path, Request, State},
-    middleware::map_request_with_state,
-    response::IntoResponse,
     routing::{get, post},
     Router,
 };
 use database::MIGRATIONS;
-use leptos::{logging::log, prelude::*};
+use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tokio::signal;
 use tower::ServiceBuilder;
@@ -119,7 +114,7 @@ fn routes(state: ServerState) -> Router {
     println!("{routes:?}");
     Router::new()
         .nest("/api", api_routes())
-        .layer(map_request_with_state(state.clone(), validate_auth))
+        // .layer(map_request_with_state(state.clone(), validate_auth))
         .route("/health_check", get(|| async { "" }))
         // .leptos_routes(generate_route_list(App), get(leptos_routes_handler))
         .leptos_routes(&state, routes, {
@@ -144,11 +139,11 @@ fn routes(state: ServerState) -> Router {
 
 fn api_routes() -> Router<ServerState> {
     Router::new()
-        .route("/*fn_name", get(server_fn_handler).post(server_fn_handler))
-        .route("/test", get(|| async { "hello!\n" }))
         .route("/videos/:id", get(handlers::videos::get_video))
         .route("/videos/:id/play", get(handlers::videos::play_video))
+        .route("/videos", get(handlers::videos::list_videos))
         .route("/download", post(handlers::download::add_video_to_queue))
+        .route("/downloads", get(handlers::download::list_downloads))
 }
 
 async fn shutdown_signal() {
@@ -169,21 +164,4 @@ async fn shutdown_signal() {
         _ = ctrl_c => {},
         _ = terminate => {},
     }
-}
-
-async fn server_fn_handler(
-    State(app_state): State<ServerState>,
-    path: Path<String>,
-    request: Request<Body>,
-) -> impl IntoResponse {
-    log!("{:?}", path);
-
-    leptos_axum::handle_server_fns_with_context(
-        move || {
-            provide_context(app_state.clone());
-            // provide_context(app_state.pool.clone());
-        },
-        request,
-    )
-    .await
 }

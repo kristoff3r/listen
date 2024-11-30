@@ -1,19 +1,22 @@
-use api::{ApiError, Video, VideoId};
+use api::{Video, VideoId};
 use leptos::prelude::*;
 
-use crate::client_state::AuthClient;
+use crate::backend::use_backend;
 
 #[component]
 pub fn videos_page() -> impl IntoView {
-    let action = ServerAction::<GetVideos>::new();
-    let videos = Resource::new(move || action.version().get(), |_| get_videos());
+    let backend = use_backend();
+    let videos = LocalResource::new(move || {
+        let backend = backend.clone();
+        async move { backend.list_videos().await.unwrap() }
+    });
     let selected = RwSignal::new(None);
 
     view! {
         <Transition fallback=move || view! { <p>"Loading..."</p> }>
             <div class="flex w-full min-h-screen">
                 <div class="w-[200px] bg-blue-400">
-                    {move || match videos.get() {
+                    {move || match videos.get().map(|v| v.take()) {
                         Some(Ok(videos)) => view! { <VideoList videos selected /> }.into_any(),
                         Some(Err(e)) => view! { {format!("error loading video: {e}").into_any()} },
                         _ => view! { <p>"Loading..."</p> }.into_any(),
@@ -78,14 +81,4 @@ pub fn embed_youtube(youtube_id: String) -> impl IntoView {
             allowfullscreen
         ></iframe>
     }
-}
-
-#[server(client = AuthClient)]
-pub async fn get_videos() -> Result<Vec<Video>, ServerFnError<ApiError>> {
-    let pool = expect_context::<crate::server_state::ServerState>().pool;
-    let mut conn = pool.get().await.unwrap();
-
-    let videos = database::models::Video::list(&mut conn).await.unwrap();
-
-    Ok(videos.into_iter().map(Into::into).collect())
 }

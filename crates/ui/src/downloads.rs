@@ -1,23 +1,29 @@
-use api::ApiError;
 use leptos::{either::EitherOf3, prelude::*};
 
-use crate::{client_state::AuthClient, loading::Loading};
+use crate::{backend::use_backend, loading::Loading};
 
 #[component]
 pub fn DownloadsPage() -> impl IntoView {
-    let action = ServerAction::<GetDownloads>::new();
-    let downloads = Resource::new(move || action.version().get(), |_| get_downloads());
+    let backend = use_backend();
+    let downloads = LocalResource::new(move || {
+        let backend = backend.clone();
+        async move { backend.list_downloads().await.unwrap() }
+    });
 
     view! {
         <Transition fallback=move || view! { <Loading /> }>
             <div class="flex w-full min-h-screen">
                 <div class="w-[20%] bg-blue-400">
-                    {move || match downloads.get() {
-                        Some(Ok(downloads)) => EitherOf3::A(view! { <DownloadList downloads /> }),
-                        Some(Err(e)) => {
-                            EitherOf3::B(view! { {format!("error loading: {e}").into_view()} })
+                    {move || {
+                        match downloads.get().map(|v| v.take()) {
+                            Some(Ok(downloads)) => {
+                                EitherOf3::A(view! { <DownloadList downloads /> })
+                            }
+                            Some(Err(e)) => {
+                                EitherOf3::B(view! { {format!("error loading: {e}").into_view()} })
+                            }
+                            None => EitherOf3::C(view! { <Loading /> }),
                         }
-                        _ => EitherOf3::C(view! { <Loading /> }),
                     }}
 
                 </div>
@@ -27,7 +33,7 @@ pub fn DownloadsPage() -> impl IntoView {
 }
 
 #[component]
-pub fn download_list(downloads: GetDownloadsResult) -> impl IntoView {
+pub fn download_list(downloads: Vec<(api::Video, Vec<api::Download>)>) -> impl IntoView {
     let entries = downloads
         .into_iter()
         .map(|(video, downloads)| view! { <DownloadListEntry video downloads /> })
@@ -48,33 +54,4 @@ pub fn download_list_entry(video: api::Video, downloads: Vec<api::Download>) -> 
             </div>
         </div>
     }
-}
-
-type GetDownloadsResult = Vec<(api::Video, Vec<api::Download>)>;
-
-#[server(client = AuthClient)]
-pub async fn get_downloads() -> Result<GetDownloadsResult, ServerFnError<ApiError>> {
-    use diesel::GroupedBy;
-
-    let pool = expect_context::<crate::server_state::ServerState>().pool;
-    let mut conn = pool.get().await.unwrap();
-
-    let videos = database::models::Video::list(&mut conn).await.unwrap();
-    let downloads = database::models::Download::list_for_videos(&mut conn, &videos)
-        .await
-        .unwrap();
-
-    let res = downloads
-        .grouped_by(&videos)
-        .into_iter()
-        .zip(videos)
-        .map(|(downloads, video)| {
-            (
-                video.into(),
-                downloads.into_iter().map(Into::into).collect(),
-            )
-        })
-        .collect::<Vec<(api::Video, Vec<api::Download>)>>();
-
-    Ok(res)
 }
