@@ -1,10 +1,12 @@
 use leptos::prelude::*;
+use leptos_router::{hooks::use_navigate, NavigateOptions};
 
 use crate::backend::use_backend;
 
 #[component]
 pub fn settings_page() -> impl IntoView {
     let backend = use_backend();
+    let navigate = use_navigate();
 
     let profile = LocalResource::new(move || {
         let backend = backend.clone();
@@ -36,6 +38,14 @@ pub fn settings_page() -> impl IntoView {
     view! {
         <div class="flex flex-col flex-1 justify-center items-center">
             <Transition fallback=move || view! {}>{profile_view}</Transition>
+            <button
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
+                on:click=move |_| {
+                    navigate("/auth/logout", NavigateOptions::default());
+                }
+            >
+                {"Logout"}
+            </button>
         </div>
     }
 }
