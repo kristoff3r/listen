@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    user_id UUID PRIMARY KEY,
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     last_login TIMESTAMPTZ NOT NULL DEFAULT now(),
     last_activity TIMESTAMPTZ NOT NULL DEFAULT now(),
     email VARCHAR(255) NOT NULL,
@@ -19,7 +19,7 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_handle ON users(handle);
 
 CREATE TABLE oidc_mapping (
-    oidc_mapping_id UUID PRIMARY KEY,
+    oidc_mapping_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     oidc_issuer_url VARCHAR(255) NOT NULL,
     oidc_issuer_id VARCHAR(255) NOT NULL,
     user_id UUID NOT NULL,
@@ -35,7 +35,7 @@ CREATE INDEX idx_oidc_mapping ON oidc_mapping(oidc_issuer_url, oidc_issuer_id);
 CREATE INDEX idx_oidc_mapping_user ON oidc_mapping(user_id);
 
 CREATE TABLE user_sessions (
-    user_session_id UUID PRIMARY KEY,
+    user_session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     oidc_issuer_url VARCHAR(255),
     csrf_token VARCHAR(255),
     nonce VARCHAR(255),

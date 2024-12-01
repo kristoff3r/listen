@@ -44,7 +44,10 @@ impl IntoResponse for ListenError {
                 ApiError::NotFound => StatusCode::NOT_FOUND,
                 ApiError::CsrfFailure => StatusCode::BAD_REQUEST,
                 ApiError::NotAuthorized => StatusCode::UNAUTHORIZED,
-                ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+                ApiError::InternalServerError => {
+                    tracing::error!("Internal server error: {:?}\n{}", self.inner, self.context);
+                    StatusCode::INTERNAL_SERVER_ERROR
+                }
                 ApiError::Unknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
             }
         };

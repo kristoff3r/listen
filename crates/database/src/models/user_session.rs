@@ -1,7 +1,7 @@
 use api::{UserId, UserSessionId};
 use diesel::{delete, dsl::now, insert_into, prelude::*, update, QueryDsl, Selectable};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
-use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
+use openidconnect::{CsrfToken, IssuerUrl, Nonce, PkceCodeVerifier};
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
@@ -45,10 +45,10 @@ struct NewUserSession<'a> {
 impl UserSession {
     pub async fn create(
         conn: &mut AsyncPgConnection,
-        oidc_issuer_url: &str,
-        csrf_token: CsrfToken,
-        nonce: Nonce,
-        pkce_code_verifier: PkceCodeVerifier,
+        oidc_issuer_url: &IssuerUrl,
+        csrf_token: &CsrfToken,
+        nonce: &Nonce,
+        pkce_code_verifier: &PkceCodeVerifier,
     ) -> Result<Self> {
         use crate::schema::user_sessions::dsl as s;
 

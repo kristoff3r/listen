@@ -91,6 +91,10 @@ impl Backend {
         Self::get("/get-auth").await
     }
 
+    pub async fn get_auth_url(&self) -> BackendResult<api::AuthUrlResponse> {
+        Self::post("/auth/auth-url").await
+    }
+
     pub async fn set_auth(&self) -> BackendResult<()> {
         Self::post("/set-auth").await
     }

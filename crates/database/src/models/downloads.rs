@@ -76,8 +76,7 @@ impl Download {
     }
 
     pub async fn get_next_download(conn: &mut AsyncPgConnection) -> Result<Option<(Video, Self)>> {
-        use crate::schema::downloads::dsl as d;
-        use crate::schema::videos::dsl as v;
+        use crate::schema::{downloads::dsl as d, videos::dsl as v};
 
         let results = d::downloads
             .inner_join(v::videos)

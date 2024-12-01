@@ -100,3 +100,8 @@ pub enum ApiError {
 pub struct DownloadRequest {
     pub url: String,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct AuthUrlResponse {
+    pub url: String,
+}

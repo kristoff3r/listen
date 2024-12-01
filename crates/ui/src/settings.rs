@@ -12,8 +12,8 @@ pub fn settings_page() -> impl IntoView {
             <button on:click=move |_| {
                 let backend = use_backend();
                 leptos::task::spawn_local(async move {
-                    let auth_result = backend.set_auth().await;
-                    log::info!("Setting auth: {:?}", auth_result);
+                    let auth_result = backend.get_auth_url().await;
+                    log::info!("Getting auth url: {:?}", auth_result);
                 });
             }>
                 <span>

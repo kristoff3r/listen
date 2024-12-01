@@ -18,23 +18,23 @@ use tower_http::{
 };
 use tracing::{info, warn, Level};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use ui::{
+use ui::App;
+
+use crate::{
+    db::setup_database_pool,
     server_state::{ServerState, VideosDir},
-    App,
 };
 
-use crate::db::setup_database_pool;
-
-mod auth;
+mod app_env_vars;
 mod csrf_protection;
 pub mod db;
 pub mod error;
 pub mod handlers;
+mod oidc;
+mod server_state;
 pub mod ws;
 
 pub use db::PgPool;
-
-const PORT: u16 = 3000;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -47,10 +47,29 @@ async fn main() -> anyhow::Result<()> {
 
     dotenvy::dotenv().ok();
 
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL");
+    let app_env_vars = app_env_vars::AppEnvVars::load_from_env()?;
 
-    info!("Connecting to database {db_url}");
-    let pool = setup_database_pool(&db_url).context("setup datbase pool")?;
+    let google_client_id = openidconnect::ClientId::new(app_env_vars.google_oidc_client_id);
+    let google_client_secret =
+        openidconnect::ClientSecret::new(app_env_vars.google_oidc_client_secret);
+    let google_issuer_url =
+        openidconnect::IssuerUrl::new("https://accounts.google.com".to_string())
+            .context("Unable to create issue url")?;
+    let redirect_url = openidconnect::RedirectUrl::new(
+        "https://dev.listen.pwnies.dk:3000/auth/callback".to_string(),
+    )?;
+    let google_oidc_client = oidc::OidcClient::new(
+        google_issuer_url,
+        google_client_id,
+        google_client_secret,
+        redirect_url,
+    );
+
+    info!(
+        "Connecting to database {database_url}",
+        database_url = app_env_vars.database_url
+    );
+    let pool = setup_database_pool(&app_env_vars.database_url).context("setup datbase pool")?;
 
     {
         let mut retries = 0;
@@ -73,10 +92,11 @@ async fn main() -> anyhow::Result<()> {
 
     let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
-    let addr: SocketAddr = SocketAddr::new("0.0.0.0".parse().unwrap(), PORT);
-    let jwt_secret = b"HEFJKSHFKJSHFKJLASEHFLKWS";
-    let jwt_encoding_key = jsonwebtoken::EncodingKey::from_secret(jwt_secret);
-    let jwt_decoding_key = jsonwebtoken::DecodingKey::from_secret(jwt_secret);
+    let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
+    let jwt_encoding_key =
+        jsonwebtoken::EncodingKey::from_secret(app_env_vars.jwt_secret.as_bytes());
+    let jwt_decoding_key =
+        jsonwebtoken::DecodingKey::from_secret(app_env_vars.jwt_secret.as_bytes());
     let state = ServerState {
         pool,
         leptos_options,
@@ -87,6 +107,7 @@ async fn main() -> anyhow::Result<()> {
         ),
         jwt_encoding_key,
         jwt_decoding_key,
+        google_oidc_client,
     };
 
     info!("listening on {}", addr);
@@ -184,8 +205,8 @@ fn routes(state: ServerState) -> Router {
 
 fn api_routes(state: ServerState) -> Router<ServerState> {
     let csrf_layer = map_request(csrf_protection::csrf_protection);
-    let auth_required_layer = map_request_with_state(state.clone(), auth::auth_required);
-    let auth_optional_layer = map_request_with_state(state, auth::auth_optional);
+    let auth_required_layer = map_request_with_state(state.clone(), handlers::auth::auth_required);
+    let auth_optional_layer = map_request_with_state(state, handlers::auth::auth_optional);
 
     // Routes will full protection: CSRF + authentication required
     let api_routes = Router::new()
@@ -207,9 +228,10 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
 
     // Routes we want to access without authentication. They still need csrf protection
     let unauthenticated_routes = Router::new()
-        .route("/get-auth", get(auth::get_auth))
-        .route("/set-auth", post(auth::set_auth))
-        .route("/clear-auth", post(auth::clear_auth))
+        .route("/get-auth", get(handlers::auth::get_auth))
+        // .route("/set-auth", post(handlers::auth::set_auth))
+        .route("/clear-auth", post(handlers::auth::clear_auth))
+        .route("/auth/auth-url", post(handlers::auth::auth_url))
         .layer(csrf_layer)
         .layer(auth_optional_layer);
 

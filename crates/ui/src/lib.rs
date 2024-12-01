@@ -10,8 +10,6 @@ mod hooks;
 pub mod loading;
 pub mod nav;
 mod routes;
-#[cfg(feature = "ssr")]
-pub mod server_state;
 pub mod settings;
 pub mod videos;
 

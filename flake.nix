@@ -117,8 +117,6 @@
       };
 
       devShells."${system}".default = craneLib.devShell {
-        DATABASE_URL = "postgres://postgres:postgres@localhost:5433/listen";
-
         inputsFrom = [ listen-api ];
 
         packages = with pkgs; [

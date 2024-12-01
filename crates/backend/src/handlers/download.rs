@@ -9,11 +9,11 @@ use axum::{
 use database::models::{Download, DownloadStatus};
 use tokio::process::Command;
 use tracing::{info, warn};
-use ui::server_state::VideosDir;
 use youtube_dl::YoutubeDl;
 
 use crate::{
     error::{ListenError, ListenErrorExt, Result},
+    server_state::VideosDir,
     PgPool,
 };
 

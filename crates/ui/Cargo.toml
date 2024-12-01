@@ -6,21 +6,15 @@ version.workspace = true
 
 [dependencies]
 api = { path = "../api" }
-database = { path = "../database", optional = true }
 
-axum = { workspace = true, optional = true }
 cfg-if.workspace = true
-diesel = { workspace = true, features = ["postgres", "time"], optional = true }
-diesel-async = { workspace = true, features = [
-    "postgres",
-    "deadpool",
-], optional = true }
 gloo-net = { workspace = true, features = ["http", "json"] }
 gloo-storage.workspace = true
 http.workspace = true
 icondata.workspace = true
-leptos-use.workspace = true
+jsonwebtoken.workspace = true
 leptos.workspace = true
+leptos-use.workspace = true
 leptos_axum = { workspace = true, optional = true }
 leptos_icons.workspace = true
 leptos_meta.workspace = true
@@ -28,21 +22,12 @@ leptos_router.workspace = true
 log.workspace = true
 reqwest = { workspace = true, default-features = false, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+strum.workspace = true
 thiserror.workspace = true
 web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
-strum.workspace = true
-jsonwebtoken.workspace = true
-serde_json.workspace = true
 
 [features]
 default = []
 hydrate = ["leptos/hydrate"]
-ssr = [
-    "leptos/ssr",
-    "leptos_router/ssr",
-    "dep:axum",
-    "dep:diesel",
-    "dep:diesel-async",
-    "dep:leptos_axum",
-    "dep:database",
-]
+ssr = ["leptos/ssr", "leptos_router/ssr", "dep:leptos_axum"]

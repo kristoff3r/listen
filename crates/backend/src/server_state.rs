@@ -13,6 +13,7 @@ pub struct ServerState {
     pub videos_dir: VideosDir,
     pub jwt_encoding_key: jsonwebtoken::EncodingKey,
     pub jwt_decoding_key: jsonwebtoken::DecodingKey,
+    pub google_oidc_client: crate::oidc::OidcClient,
 }
 
 #[derive(Clone, Debug)]

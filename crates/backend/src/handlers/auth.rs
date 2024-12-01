@@ -7,7 +7,11 @@ use axum::{
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::{
+    error::{ListenErrorExt, Result},
+    oidc::OidcClient,
+    PgPool,
+};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
@@ -111,6 +115,61 @@ pub async fn clear_auth(cookie_jar: CookieJar) -> Result<impl IntoResponse> {
     );
 
     Ok((cookie_jar, axum::Json(())))
+}
+
+pub async fn auth_url(
+    State(jwt_encoding_key): State<jsonwebtoken::EncodingKey>,
+    State(pool): State<PgPool>,
+    State(oidc_client): State<OidcClient>,
+    cookie_jar: CookieJar,
+) -> Result<(CookieJar, axum::Json<api::AuthUrlResponse>)> {
+    tracing::info!("I am here");
+    let mut conn = pool.get().await.with_internal_server_error()?;
+
+    let auth_url = oidc_client.auth_url().await?;
+
+    let session = database::models::UserSession::create(
+        &mut conn,
+        &auth_url.issuer_url,
+        &auth_url.csrf_token,
+        &auth_url.nonce,
+        &auth_url.pkce_code_verifier,
+    )
+    .await
+    .with_internal_server_error()?;
+
+    let expiration = time::OffsetDateTime::now_utc().saturating_add(time::Duration::days(30));
+
+    let token = match jsonwebtoken::encode(
+        &jsonwebtoken::Header::default(),
+        &Claims {
+            exp: usize::try_from(expiration.unix_timestamp()).unwrap(),
+            sub: session.user_session_id,
+        },
+        &jwt_encoding_key,
+    ) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!("Unable to encode jwt token: {e:?}");
+            return Err(api::ApiError::InternalServerError.into());
+        }
+    };
+
+    let cookie_jar = cookie_jar.add(
+        Cookie::build((COOKIE_NAME, token))
+            .http_only(true)
+            .secure(true)
+            .path("/")
+            .same_site(axum_extra::extract::cookie::SameSite::Strict)
+            .expires(expiration),
+    );
+
+    Ok((
+        cookie_jar,
+        axum::Json(api::AuthUrlResponse {
+            url: auth_url.auth_url.as_str().to_string(),
+        }),
+    ))
 }
 
 /*
