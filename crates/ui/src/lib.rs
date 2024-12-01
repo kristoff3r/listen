@@ -24,7 +24,7 @@ pub fn App() -> impl IntoView {
     view! {
         <Stylesheet id="leptos" href="/pkg/listen.css" />
         <Title text="Listen" />
-        <Link rel="icon" href="favicon.png" sizes="32x32" />
+        <Link rel="icon" href="/favicon.png" sizes="32x32" />
         <ListenRoutes />
     }
 }
