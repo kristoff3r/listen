@@ -2,13 +2,10 @@ use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use anyhow::Context;
 use axum::{
-    extract::Request,
     middleware::{map_request, map_request_with_state},
-    response::IntoResponse,
     routing::{get, post},
     Router,
 };
-use axum_extra::extract::{cookie::Cookie, CookieJar};
 use axum_server::tls_rustls::RustlsConfig;
 use database::MIGRATIONS;
 use leptos::prelude::*;
@@ -186,7 +183,8 @@ fn routes(state: ServerState) -> Router {
 
 fn api_routes(state: ServerState) -> Router<ServerState> {
     let csrf_layer = map_request(csrf_protection::csrf_protection);
-    let auth_layer = map_request_with_state(state, auth_required);
+    let auth_required_layer = map_request_with_state(state.clone(), auth::auth_required);
+    let auth_optional_layer = map_request_with_state(state, auth::auth_optional);
 
     // Routes will full protection: CSRF + authentication required
     let api_routes = Router::new()
@@ -198,58 +196,25 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
             post(handlers::download::add_video_to_queue),
         )
         .route_layer(csrf_layer.clone())
-        .layer(auth_layer.clone());
+        .layer(auth_required_layer.clone());
 
     // Routes for simple get requires issued by the browser, e.g. through a <source> tag.
     // These should get authentication protection, but not csrf protection.
     let non_csrf_api_routes = Router::new()
         .route("/videos/:id/play", get(handlers::videos::play_video))
-        .route_layer(auth_layer);
+        .route_layer(auth_required_layer);
 
     // Routes we want to access without authentication. They still need csrf protection
     let unauthenticated_routes = Router::new()
-        .route("/get-cookie", get(get_cookie))
-        .route("/set-cookie", post(set_cookie))
-        .route("/clear-cookie", post(clear_cookie))
-        .layer(csrf_layer);
+        .route("/get-auth", get(auth::get_auth))
+        .route("/set-auth", post(auth::set_auth))
+        .route("/clear-auth", post(auth::clear_auth))
+        .layer(csrf_layer)
+        .layer(auth_optional_layer);
 
     api_routes
         .merge(non_csrf_api_routes)
         .merge(unauthenticated_routes)
-}
-
-const COOKIE_NAME: &str = "__Host-user_token";
-
-async fn set_cookie(cookie_jar: CookieJar) -> error::Result<impl IntoResponse> {
-    let cookie_jar = cookie_jar.add(
-        Cookie::build((COOKIE_NAME, "bar"))
-            .http_only(true)
-            .secure(true)
-            .path("/")
-            .same_site(axum_extra::extract::cookie::SameSite::Strict)
-            .expires(time::OffsetDateTime::now_utc().saturating_add(time::Duration::days(30))),
-    );
-
-    Ok((cookie_jar, axum::Json(())))
-}
-
-async fn get_cookie(cookie_jar: CookieJar) -> error::Result<axum::Json<Option<String>>> {
-    Ok(axum::Json(
-        cookie_jar.get(COOKIE_NAME).map(|c| c.value().to_string()),
-    ))
-}
-
-async fn clear_cookie(cookie_jar: CookieJar) -> error::Result<impl IntoResponse> {
-    let cookie_jar = cookie_jar.remove(
-        Cookie::build(COOKIE_NAME)
-            .removal()
-            .http_only(true)
-            .secure(true)
-            .path("/")
-            .same_site(axum_extra::extract::cookie::SameSite::Strict),
-    );
-
-    Ok((cookie_jar, axum::Json(())))
 }
 
 async fn shutdown_signal() {
@@ -269,13 +234,5 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {},
         _ = terminate => {},
-    }
-}
-
-async fn auth_required(cookie_jar: CookieJar, request: Request) -> error::Result<Request> {
-    if cookie_jar.get(COOKIE_NAME).is_some() {
-        Ok(request)
-    } else {
-        Err(api::ApiError::NotAuthorized.into())
     }
 }

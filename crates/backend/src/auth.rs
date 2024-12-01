@@ -1,46 +1,116 @@
-use api::{ApiError, UserSessionId};
+use api::UserSessionId;
 use axum::{
-    extract::FromRequestParts,
-    http::{header::AUTHORIZATION, request::Parts},
+    extract::{Request, State},
+    response::IntoResponse,
+    Extension,
 };
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 
-use crate::error::ListenError;
+use crate::error::Result;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct AuthBearer(pub String);
-
-#[axum::async_trait]
-impl<B> FromRequestParts<B> for AuthBearer
-where
-    B: Send + Sync,
-{
-    type Rejection = ListenError;
-
-    async fn from_request_parts(req: &mut Parts, _: &B) -> Result<Self, Self::Rejection> {
-        let authorization = req
-            .headers
-            .get(AUTHORIZATION)
-            .ok_or(ApiError::NotAuthorized)?
-            .to_str()
-            .map_err(|_| ApiError::NotAuthorized)?;
-
-        let (left, right) = authorization
-            .split_once(' ')
-            .ok_or(ApiError::NotAuthorized)?;
-
-        if left != "Bearer" {
-            return Err(ApiError::NotAuthorized.into());
-        }
-
-        Ok(Self(right.to_string()))
-    }
-}
-
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     exp: usize,
     sub: UserSessionId,
+}
+
+const COOKIE_NAME: &str = "__Host-user_token";
+
+fn decode_jwt(
+    jwt_decoding_key: &jsonwebtoken::DecodingKey,
+    cookie_jar: &CookieJar,
+) -> Option<Claims> {
+    let token = cookie_jar.get(COOKIE_NAME)?;
+    let validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
+    match jsonwebtoken::decode::<Claims>(&token.value(), &jwt_decoding_key, &validation) {
+        Ok(claims) => Some(claims.claims),
+        Err(err) => {
+            tracing::error!("Unable to validate jwt: {err:?}");
+            None
+        }
+    }
+}
+
+pub async fn auth_optional(
+    State(jwt_decoding_key): State<jsonwebtoken::DecodingKey>,
+    cookie_jar: CookieJar,
+    mut request: Request,
+) -> Result<Request> {
+    if let Some(claims) = decode_jwt(&jwt_decoding_key, &cookie_jar) {
+        tracing::debug!("Inserting extension claims {claims:?}");
+        request.extensions_mut().insert(claims);
+    }
+
+    Ok(request)
+}
+
+pub async fn auth_required(
+    State(jwt_decoding_key): State<jsonwebtoken::DecodingKey>,
+    cookie_jar: CookieJar,
+    mut request: Request,
+) -> Result<Request> {
+    if let Some(claims) = decode_jwt(&jwt_decoding_key, &cookie_jar) {
+        tracing::debug!("Inserting extension claims {claims:?}");
+        request.extensions_mut().insert(claims);
+        Ok(request)
+    } else {
+        Err(api::ApiError::NotAuthorized.into())
+    }
+}
+
+pub async fn set_auth(
+    State(jwt_encoding_key): State<jsonwebtoken::EncodingKey>,
+    cookie_jar: CookieJar,
+) -> Result<impl IntoResponse> {
+    let expiration = time::OffsetDateTime::now_utc().saturating_add(time::Duration::days(30));
+
+    let token = match jsonwebtoken::encode(
+        &jsonwebtoken::Header::default(),
+        &Claims {
+            exp: usize::try_from(expiration.unix_timestamp()).unwrap(),
+            sub: UserSessionId::new_random(),
+        },
+        &jwt_encoding_key,
+    ) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!("Unable to encode jwt token: {e:?}");
+            return Err(api::ApiError::InternalServerError.into());
+        }
+    };
+
+    let cookie_jar = cookie_jar.add(
+        Cookie::build((COOKIE_NAME, token))
+            .http_only(true)
+            .secure(true)
+            .path("/")
+            .same_site(axum_extra::extract::cookie::SameSite::Strict)
+            .expires(expiration),
+    );
+
+    Ok((cookie_jar, axum::Json(())))
+}
+
+pub async fn get_auth(
+    claims: Option<Extension<Claims>>,
+) -> Result<axum::Json<Option<serde_json::Value>>> {
+    Ok(axum::Json(claims.map(|Extension(claims)| {
+        serde_json::value::to_value(&claims).unwrap()
+    })))
+}
+
+pub async fn clear_auth(cookie_jar: CookieJar) -> Result<impl IntoResponse> {
+    let cookie_jar = cookie_jar.remove(
+        Cookie::build(COOKIE_NAME)
+            .removal()
+            .http_only(true)
+            .secure(true)
+            .path("/")
+            .same_site(axum_extra::extract::cookie::SameSite::Strict),
+    );
+
+    Ok((cookie_jar, axum::Json(())))
 }
 
 /*

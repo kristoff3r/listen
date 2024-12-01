@@ -10,6 +10,15 @@ pub struct Uuid<T> {
     marker: PhantomData<T>,
 }
 
+impl<T> Uuid<T> {
+    pub fn new_random() -> Self {
+        Self {
+            uuid: uuid::Uuid::new_v4(),
+            marker: PhantomData,
+        }
+    }
+}
+
 // Derive traits
 impl<T> Copy for Uuid<T> {}
 impl<T> Clone for Uuid<T> {

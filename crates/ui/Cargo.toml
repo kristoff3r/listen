@@ -32,6 +32,7 @@ thiserror.workspace = true
 web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
 strum.workspace = true
 jsonwebtoken.workspace = true
+serde_json.workspace = true
 
 [features]
 default = []

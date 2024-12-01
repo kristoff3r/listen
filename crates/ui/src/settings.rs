@@ -12,12 +12,12 @@ pub fn settings_page() -> impl IntoView {
             <button on:click=move |_| {
                 let backend = use_backend();
                 leptos::task::spawn_local(async move {
-                    let cookie_result = backend.set_cookie().await;
-                    log::info!("Setting cookie: {:?}", cookie_result);
+                    let auth_result = backend.set_auth().await;
+                    log::info!("Setting auth: {:?}", auth_result);
                 });
             }>
                 <span>
-                    "Set cookie"
+                    "Set auth"
                     <Icon icon=i::MdiCookiePlusOutline attr:width="32" attr:height="32" />
                 </span>
             </button>
@@ -25,24 +25,24 @@ pub fn settings_page() -> impl IntoView {
             <button on:click=move |_| {
                 let backend = use_backend();
                 leptos::task::spawn_local(async move {
-                    let cookie_result = backend.get_cookie().await;
-                    log::info!("Getting cookie: {:?}", cookie_result);
+                    let auth_result = backend.get_auth().await;
+                    log::info!("Getting auth: {:?}", auth_result);
                 });
             }>
                 <span>
-                    "Get cookie" <Icon icon=i::MdiCookieOutline attr:width="32" attr:height="32" />
+                    "Get auth" <Icon icon=i::MdiCookieOutline attr:width="32" attr:height="32" />
                 </span>
             </button>
 
             <button on:click=move |_| {
                 let backend = use_backend();
                 leptos::task::spawn_local(async move {
-                    let cookie_result = backend.clear_cookie().await;
-                    log::info!("Clearing cookie: {:?}", cookie_result);
+                    let auth_result = backend.clear_auth().await;
+                    log::info!("Clearing auth: {:?}", auth_result);
                 });
             }>
                 <span>
-                    "Clear cookie"
+                    "Clear auth"
                     <Icon icon=i::MdiCookieMinusOutline attr:width="32" attr:height="32" />
                 </span>
             </button>

@@ -87,16 +87,16 @@ impl Backend {
         Self::post_json("/downloads/add", request).await
     }
 
-    pub async fn get_cookie(&self) -> BackendResult<Option<String>> {
-        Self::get("/get-cookie").await
+    pub async fn get_auth(&self) -> BackendResult<Option<serde_json::Value>> {
+        Self::get("/get-auth").await
     }
 
-    pub async fn set_cookie(&self) -> BackendResult<()> {
-        Self::post("/set-cookie").await
+    pub async fn set_auth(&self) -> BackendResult<()> {
+        Self::post("/set-auth").await
     }
 
-    pub async fn clear_cookie(&self) -> BackendResult<()> {
-        Self::post("/clear-cookie").await
+    pub async fn clear_auth(&self) -> BackendResult<()> {
+        Self::post("/clear-auth").await
     }
 }
 
