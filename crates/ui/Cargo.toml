@@ -8,13 +8,14 @@ version.workspace = true
 api = { path = "../api" }
 
 cfg-if.workspace = true
+codee.workspace = true
 gloo-net = { workspace = true, features = ["http", "json"] }
 gloo-storage.workspace = true
 http.workspace = true
 icondata.workspace = true
 jsonwebtoken.workspace = true
-leptos.workspace = true
 leptos-use.workspace = true
+leptos.workspace = true
 leptos_axum = { workspace = true, optional = true }
 leptos_icons.workspace = true
 leptos_meta.workspace = true
@@ -30,4 +31,4 @@ web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
 [features]
 default = []
 hydrate = ["leptos/hydrate"]
-ssr = ["leptos/ssr", "leptos_router/ssr", "dep:leptos_axum"]
+ssr = ["leptos/ssr", "leptos_router/ssr", "leptos-use/ssr", "dep:leptos_axum"]

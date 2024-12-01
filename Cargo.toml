@@ -14,6 +14,7 @@ axum-extra = "0.9.4"
 axum-server = "0.7.1"
 axum-test = "15.7.4"
 cfg-if = "1.0.0"
+codee = "0.2"
 console_error_panic_hook = "0.1"
 console_log = "1.0.0"
 deadpool = "0.12.1"
@@ -49,7 +50,7 @@ jsonwebtoken = "9.3.0"
 leptos = { version = "0.7.0", features = ["nightly"] }
 leptos-use = "0.14.0-rc3"
 leptos_axum = "0.7.0"
-leptos_icons = { git = "https://github.com/PenguinWithATie/leptos-icons", branch = "main" }
+leptos_icons = { git = "https://github.com/ozpv/leptos-icons", branch = "leptos-0.7.0" }
 leptos_meta = "0.7.0"
 leptos_router = "0.7.0"
 log = "0.4.22"

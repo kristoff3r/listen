@@ -4,6 +4,7 @@ use leptos_meta::{provide_meta_context, Link, MetaTags, Stylesheet, Title};
 use routes::ListenRoutes;
 
 mod backend;
+pub mod contexts;
 pub mod downloads;
 pub mod errors;
 mod hooks;
@@ -11,6 +12,7 @@ pub mod loading;
 pub mod nav;
 mod routes;
 pub mod settings;
+pub mod util;
 pub mod videos;
 
 #[component]

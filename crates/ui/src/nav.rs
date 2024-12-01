@@ -9,6 +9,8 @@ use leptos_router::{
 
 use crate::backend::use_backend;
 
+pub const SIZE: &str = "32";
+
 #[component]
 pub fn Nav() -> impl IntoView {
     let navigate = use_navigate();
@@ -29,41 +31,21 @@ pub fn Nav() -> impl IntoView {
     });
 
     view! {
-        <Transition fallback=move || view! { <p>"Loading..."</p> }>
-            <div id="root" class="grid grid-cols-main grid-rows-1">
-                <nav class="flex flex-1 flex-col items-center bg-slate-500 h-screen gap-2 py-2">
-                    <A href="/videos">
-                        <Icon
-                            icon=i::OcVideoLg
-                            attr:title="Videos"
-                            attr:width="32"
-                            attr:height="32"
-                        />
-                    </A>
-                    <A href="/videos">
-                        <Icon
-                            icon=i::TbListSearch
-                            attr:title="Search"
-                            attr:width="32"
-                            attr:height="32"
-                        />
-                    </A>
-                    <A href="/videos">
-                        <Icon
-                            icon=i::LuListVideo
-                            attr:title="Playlist"
-                            attr:width="32"
-                            attr:height="32"
-                        />
-                    </A>
-                    <A href="/downloads">
-                        <Icon
-                            icon=i::BsCloudArrowDown
-                            attr:title="Downloads"
-                            attr:width="32"
-                            attr:height="32"
-                        />
-                    </A>
+        <div id="root" class="grid grid-cols-main grid-rows-1">
+            <nav class="flex flex-1 flex-col items-center bg-slate-500 h-screen gap-2 py-2">
+                <A href="/videos">
+                    <Icon icon=i::OcVideoLg attr:title="Videos" width=SIZE height=SIZE />
+                </A>
+                <A href="/videos">
+                    <Icon icon=i::TbListSearch attr:title="Search" width=SIZE height=SIZE />
+                </A>
+                <A href="/videos">
+                    <Icon icon=i::LuListVideo attr:title="Playlist" width=SIZE height=SIZE />
+                </A>
+                <A href="/downloads">
+                    <Icon icon=i::BsCloudArrowDown attr:title="Downloads" width=SIZE height=SIZE />
+                </A>
+                <Transition fallback=move || view! {}>
                     <div class="mt-auto mb-4">
                         {move || match profile.get().map(|p| p.take()) {
                             Some(Ok(profile)) => {
@@ -89,11 +71,11 @@ pub fn Nav() -> impl IntoView {
                             _ => view! {}.into_any(),
                         }}
                     </div>
-                </nav>
-                <main class="flex flex-1 my-0 w-full h-screen text-center justif">
-                    <Outlet />
-                </main>
-            </div>
-        </Transition>
+                </Transition>
+            </nav>
+            <main class="flex flex-1 my-0 w-full h-screen text-center justif">
+                <Outlet />
+            </main>
+        </div>
     }
 }

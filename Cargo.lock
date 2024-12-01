@@ -2285,8 +2285,8 @@ dependencies = [
 
 [[package]]
 name = "leptos_icons"
-version = "0.3.1"
-source = "git+https://github.com/PenguinWithATie/leptos-icons?branch=main#5eb032e13f40934c4c67d11a653b6f4e03553668"
+version = "0.4.0"
+source = "git+https://github.com/ozpv/leptos-icons?branch=leptos-0.7.0#c8f36e20b7caaec0fae3f04a4e49f39f4d64f6de"
 dependencies = [
  "icondata_core",
  "leptos",
@@ -4662,6 +4662,7 @@ version = "0.1.0"
 dependencies = [
  "api",
  "cfg-if",
+ "codee",
  "gloo-net",
  "gloo-storage",
  "http 1.1.0",

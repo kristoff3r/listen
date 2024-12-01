@@ -31,16 +31,13 @@ pub fn ListenRoutes() -> impl IntoView {
             }>
                 <Routes fallback>
                     <ParentRoute path=path!("/") view=Nav>
-                        <Route path=path!("") view=move || view! { <Redirect path="/videos" /> } />
+                        <Route path=path!("") view=move || redirect_replace("/videos") />
                         <Route path=path!("/videos") view=VideosPage />
                         <Route path=path!("/downloads") view=DownloadsPage />
                         <Route path=path!("/settings") view=SettingsPage />
                     </ParentRoute>
                     <ParentRoute path=path!("/auth") view=Auth>
-                        <Route
-                            path=path!("")
-                            view=move || view! { <Redirect path="/auth/login" /> }
-                        />
+                        <Route path=path!("") view=move || redirect_replace("/auth/login") />
                         <Route path=path!("/login") view=LoginPage />
                         <Route path=path!("/callback") view=LoginCallback />
                         <Route path=path!("/logout") view=LogoutPage />
@@ -196,4 +193,18 @@ pub fn LoginCallback() -> impl IntoView {
     }
 
     move || error.get()
+}
+
+pub fn redirect_replace(path: &'static str) -> impl IntoView {
+    view! {
+        <Redirect
+            path=path
+            options=NavigateOptions {
+                replace: true,
+                scroll: true,
+                resolve: false,
+                ..Default::default()
+            }
+        />
+    }
 }
