@@ -100,8 +100,7 @@ pub fn LoginPage() -> impl IntoView {
             });
         }>
             <span>
-                "Login with google"
-                <Icon icon=i::MdiCookiePlusOutline attr:width="32" attr:height="32" />
+                "Login with google" <Icon icon=i::MdiCookiePlusOutline width="32" height="32" />
             </span>
         </button>
 
