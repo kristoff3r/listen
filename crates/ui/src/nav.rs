@@ -64,27 +64,24 @@ pub fn Nav() -> impl IntoView {
                             attr:height="32"
                         />
                     </A>
-                    <A href="/settings">
-                        <Icon
-                            icon=i::FiSettings
-                            attr:title="Settings"
-                            attr:width="32"
-                            attr:height="32"
-                        />
-                    </A>
-                    <div class="self-end">
+                    <div class="mt-auto mb-4">
                         {move || match profile.get().map(|p| p.take()) {
                             Some(Ok(profile)) => {
                                 view! {
-                                    <img
-                                        class="rounded-full w-12 h-12"
-                                        src=profile.profile_picture_url
-                                        alt="Profile"
-                                    />
+                                    <>
+                                        <A href="/settings">
+                                            <img
+                                                class="rounded-full w-12 h-12"
+                                                src=profile.profile_picture_url
+                                                alt="Profile"
+                                                title=profile.handle
+                                            />
+                                        </A>
+                                    </>
                                 }
                                     .into_any()
                             }
-                            _ => view! { <p>"Loading..."</p> }.into_any(),
+                            _ => view! {}.into_any(),
                         }}
                     </div>
                 </nav>
