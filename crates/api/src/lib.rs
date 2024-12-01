@@ -105,3 +105,9 @@ pub struct DownloadRequest {
 pub struct AuthUrlResponse {
     pub url: String,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct AuthVerificationRequest {
+    pub state: String,
+    pub code: String,
+}

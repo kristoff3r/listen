@@ -10,8 +10,11 @@ pub enum AppError {
     #[error("Not Found")]
     NotFound,
 
-    #[error("BAD: {0}")]
-    Crashed(&'static str),
+    #[error("I crashed: {0}")]
+    Crashed(String),
+
+    #[error("API error: {0}")]
+    ApiError(api::ApiError),
 }
 
 impl AppError {
@@ -19,6 +22,7 @@ impl AppError {
         match self {
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Crashed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::ApiError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

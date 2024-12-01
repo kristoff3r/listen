@@ -91,16 +91,16 @@ impl Backend {
         Self::get("/get-auth").await
     }
 
-    pub async fn get_auth_url(&self) -> BackendResult<api::AuthUrlResponse> {
+    pub async fn auth_url(&self) -> BackendResult<api::AuthUrlResponse> {
         Self::post("/auth/auth-url").await
     }
 
-    pub async fn set_auth(&self) -> BackendResult<()> {
-        Self::post("/set-auth").await
+    pub async fn auth_verify(&self, request: &api::AuthVerificationRequest) -> BackendResult<bool> {
+        Self::post_json("/auth/auth-verify", request).await
     }
 
-    pub async fn clear_auth(&self) -> BackendResult<()> {
-        Self::post("/clear-auth").await
+    pub async fn logout(&self) -> BackendResult<()> {
+        Self::post("/auth/logout").await
     }
 
     pub async fn get_profile(&self) -> BackendResult<api::User> {

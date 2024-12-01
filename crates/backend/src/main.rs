@@ -178,7 +178,6 @@ async fn serve_http(addr: SocketAddr, app: Router<()>) -> anyhow::Result<()> {
 
 fn routes(state: ServerState) -> Router {
     let routes = generate_route_list(App);
-    println!("{routes:?}");
     Router::new()
         .nest("/api", api_routes(state.clone()))
         .route("/health_check", get(|| async { "" }))
@@ -229,10 +228,9 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
 
     // Routes we want to access without authentication. They still need csrf protection
     let unauthenticated_routes = Router::new()
-        .route("/get-auth", get(handlers::auth::get_auth))
-        // .route("/set-auth", post(handlers::auth::set_auth))
-        .route("/clear-auth", post(handlers::auth::clear_auth))
+        .route("/auth/logout", post(handlers::auth::auth_logout))
         .route("/auth/auth-url", post(handlers::auth::auth_url))
+        .route("/auth/auth-verify", post(handlers::auth::auth_verify))
         .layer(csrf_layer)
         .layer(auth_optional_layer);
 

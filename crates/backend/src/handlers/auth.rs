@@ -2,7 +2,6 @@ use api::UserSessionId;
 use axum::{
     extract::{Request, State},
     response::IntoResponse,
-    Extension,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
@@ -63,48 +62,7 @@ pub async fn auth_required(
     }
 }
 
-pub async fn set_auth(
-    State(jwt_encoding_key): State<jsonwebtoken::EncodingKey>,
-    cookie_jar: CookieJar,
-) -> Result<impl IntoResponse> {
-    let expiration = time::OffsetDateTime::now_utc().saturating_add(time::Duration::days(30));
-
-    let token = match jsonwebtoken::encode(
-        &jsonwebtoken::Header::default(),
-        &Claims {
-            exp: usize::try_from(expiration.unix_timestamp()).unwrap(),
-            sub: UserSessionId::new_random(),
-        },
-        &jwt_encoding_key,
-    ) {
-        Ok(token) => token,
-        Err(e) => {
-            tracing::error!("Unable to encode jwt token: {e:?}");
-            return Err(api::ApiError::InternalServerError.into());
-        }
-    };
-
-    let cookie_jar = cookie_jar.add(
-        Cookie::build((COOKIE_NAME, token))
-            .http_only(true)
-            .secure(true)
-            .path("/")
-            .same_site(axum_extra::extract::cookie::SameSite::Strict)
-            .expires(expiration),
-    );
-
-    Ok((cookie_jar, axum::Json(())))
-}
-
-pub async fn get_auth(
-    claims: Option<Extension<Claims>>,
-) -> Result<axum::Json<Option<serde_json::Value>>> {
-    Ok(axum::Json(claims.map(|Extension(claims)| {
-        serde_json::value::to_value(&claims).unwrap()
-    })))
-}
-
-pub async fn clear_auth(cookie_jar: CookieJar) -> Result<impl IntoResponse> {
+pub async fn auth_logout(cookie_jar: CookieJar) -> Result<impl IntoResponse> {
     let cookie_jar = cookie_jar.remove(
         Cookie::build(COOKIE_NAME)
             .removal()
@@ -170,6 +128,12 @@ pub async fn auth_url(
             url: auth_url.auth_url.as_str().to_string(),
         }),
     ))
+}
+
+pub async fn auth_verify(
+    axum::Json(_request): axum::Json<api::AuthVerificationRequest>,
+) -> Result<axum::Json<bool>> {
+    Ok(axum::Json(true))
 }
 
 /*
