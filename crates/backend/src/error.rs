@@ -42,8 +42,8 @@ impl IntoResponse for ListenError {
         } else {
             match self.api_error {
                 ApiError::NotFound => StatusCode::NOT_FOUND,
+                ApiError::CsrfFailure => StatusCode::BAD_REQUEST,
                 ApiError::NotAuthorized => StatusCode::UNAUTHORIZED,
-                ApiError::MissingAuthToken => StatusCode::UNAUTHORIZED,
                 ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
                 ApiError::Unknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
             }

@@ -7,7 +7,6 @@ use axum::{
     Json,
 };
 use database::models::{Download, DownloadStatus};
-use serde::Deserialize;
 use tokio::process::Command;
 use tracing::{info, warn};
 use ui::server_state::VideosDir;
@@ -18,14 +17,9 @@ use crate::{
     PgPool,
 };
 
-#[derive(Deserialize, Debug)]
-pub struct DownloadRequest {
-    url: String,
-}
-
 pub async fn add_video_to_queue(
     State(pool): State<PgPool>,
-    Json(req): Json<DownloadRequest>,
+    Json(req): Json<api::DownloadRequest>,
 ) -> Result<Json<()>> {
     let metadata = YoutubeDl::new(&req.url)
         .socket_timeout("15")

@@ -15,7 +15,7 @@ ui = { path = "../ui", default-features = false, features = ["ssr"] }
 
 anyhow = { workspace = true, features = ["backtrace"] }
 axum = { workspace = true, features = ["macros", "ws"] }
-axum-extra = { workspace = true, features = ["typed-header"] }
+axum-extra = { workspace = true, features = ["typed-header", "cookie"] }
 axum-server = { workspace = true, features = ["tls-rustls"] }
 axum-test.workspace = true
 deadpool = { workspace = true, features = ["rt_tokio_1"] }

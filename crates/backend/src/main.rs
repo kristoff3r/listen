@@ -2,9 +2,13 @@ use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use anyhow::Context;
 use axum::{
+    extract::Request,
+    middleware::{map_request, map_request_with_state},
+    response::IntoResponse,
     routing::{get, post},
     Router,
 };
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use axum_server::tls_rustls::RustlsConfig;
 use database::MIGRATIONS;
 use leptos::prelude::*;
@@ -25,12 +29,15 @@ use ui::{
 use crate::db::setup_database_pool;
 
 mod auth;
+mod csrf_protection;
 pub mod db;
 pub mod error;
 pub mod handlers;
 pub mod ws;
 
 pub use db::PgPool;
+
+const PORT: u16 = 3000;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -69,7 +76,7 @@ async fn main() -> anyhow::Result<()> {
 
     let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
-    let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
+    let addr: SocketAddr = SocketAddr::new("0.0.0.0".parse().unwrap(), PORT);
     let jwt_secret = b"HEFJKSHFKJSHFKJLASEHFLKWS";
     let jwt_encoding_key = jsonwebtoken::EncodingKey::from_secret(jwt_secret);
     let jwt_decoding_key = jsonwebtoken::DecodingKey::from_secret(jwt_secret);
@@ -98,11 +105,11 @@ async fn main() -> anyhow::Result<()> {
 
     let app = routes(state.clone());
 
-    #[cfg(not(feature = "local-https"))]
-    serve_http(addr, app).await.unwrap();
-
-    #[cfg(feature = "local-https")]
-    serve_https(addr, app).await.unwrap();
+    if cfg!(feature = "local-https") {
+        serve_https(addr, app).await.unwrap();
+    } else {
+        serve_http(addr, app).await.unwrap();
+    }
 
     Ok(())
 }
@@ -154,8 +161,7 @@ fn routes(state: ServerState) -> Router {
     let routes = generate_route_list(App);
     println!("{routes:?}");
     Router::new()
-        .nest("/api", api_routes())
-        // .layer(map_request_with_state(state.clone(), validate_auth))
+        .nest("/api", api_routes(state.clone()))
         .route("/health_check", get(|| async { "" }))
         // .leptos_routes(generate_route_list(App), get(leptos_routes_handler))
         .leptos_routes(&state, routes, {
@@ -178,13 +184,72 @@ fn routes(state: ServerState) -> Router {
         .with_state(state)
 }
 
-fn api_routes() -> Router<ServerState> {
-    Router::new()
-        .route("/videos/:id", get(handlers::videos::get_video))
-        .route("/videos/:id/play", get(handlers::videos::play_video))
+fn api_routes(state: ServerState) -> Router<ServerState> {
+    let csrf_layer = map_request(csrf_protection::csrf_protection);
+    let auth_layer = map_request_with_state(state, auth_required);
+
+    // Routes will full protection: CSRF + authentication required
+    let api_routes = Router::new()
         .route("/videos", get(handlers::videos::list_videos))
-        .route("/download", post(handlers::download::add_video_to_queue))
+        .route("/videos/:id", get(handlers::videos::get_video))
         .route("/downloads", get(handlers::download::list_downloads))
+        .route(
+            "/downloads/add",
+            post(handlers::download::add_video_to_queue),
+        )
+        .route_layer(csrf_layer.clone())
+        .layer(auth_layer.clone());
+
+    // Routes for simple get requires issued by the browser, e.g. through a <source> tag.
+    // These should get authentication protection, but not csrf protection.
+    let non_csrf_api_routes = Router::new()
+        .route("/videos/:id/play", get(handlers::videos::play_video))
+        .route_layer(auth_layer);
+
+    // Routes we want to access without authentication. They still need csrf protection
+    let unauthenticated_routes = Router::new()
+        .route("/get-cookie", get(get_cookie))
+        .route("/set-cookie", post(set_cookie))
+        .route("/clear-cookie", post(clear_cookie))
+        .layer(csrf_layer);
+
+    api_routes
+        .merge(non_csrf_api_routes)
+        .merge(unauthenticated_routes)
+}
+
+const COOKIE_NAME: &str = "__Host-user_token";
+
+async fn set_cookie(cookie_jar: CookieJar) -> error::Result<impl IntoResponse> {
+    let cookie_jar = cookie_jar.add(
+        Cookie::build((COOKIE_NAME, "bar"))
+            .http_only(true)
+            .secure(true)
+            .path("/")
+            .same_site(axum_extra::extract::cookie::SameSite::Strict)
+            .expires(time::OffsetDateTime::now_utc().saturating_add(time::Duration::days(30))),
+    );
+
+    Ok((cookie_jar, axum::Json(())))
+}
+
+async fn get_cookie(cookie_jar: CookieJar) -> error::Result<axum::Json<Option<String>>> {
+    Ok(axum::Json(
+        cookie_jar.get(COOKIE_NAME).map(|c| c.value().to_string()),
+    ))
+}
+
+async fn clear_cookie(cookie_jar: CookieJar) -> error::Result<impl IntoResponse> {
+    let cookie_jar = cookie_jar.remove(
+        Cookie::build(COOKIE_NAME)
+            .removal()
+            .http_only(true)
+            .secure(true)
+            .path("/")
+            .same_site(axum_extra::extract::cookie::SameSite::Strict),
+    );
+
+    Ok((cookie_jar, axum::Json(())))
 }
 
 async fn shutdown_signal() {
@@ -204,5 +269,13 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {},
         _ = terminate => {},
+    }
+}
+
+async fn auth_required(cookie_jar: CookieJar, request: Request) -> error::Result<Request> {
+    if cookie_jar.get(COOKIE_NAME).is_some() {
+        Ok(request)
+    } else {
+        Err(api::ApiError::NotAuthorized.into())
     }
 }

@@ -2,22 +2,50 @@ use icondata as i;
 use leptos::prelude::*;
 use leptos_icons::Icon;
 
-use crate::errors::AppError;
+use crate::backend::use_backend;
 
 #[component]
 pub fn settings_page() -> impl IntoView {
-    let oops: RwSignal<Result<&'static str>> = RwSignal::new(Ok("works"));
-    let (read_oops, write_oops) = RwSignal::split(&oops);
-
     view! {
         <div class="flex flex-col flex-1 justify-center items-center">
 
             <button on:click=move |_| {
-                write_oops.set(Err(AppError::Crashed("TEXT HERE").into()))
+                let backend = use_backend();
+                leptos::task::spawn_local(async move {
+                    let cookie_result = backend.set_cookie().await;
+                    log::info!("Setting cookie: {:?}", cookie_result);
+                });
             }>
-                <span>"Crash" <Icon icon=i::AiBugOutlined attr:width="32" attr:height="32" /></span>
+                <span>
+                    "Set cookie"
+                    <Icon icon=i::MdiCookiePlusOutline attr:width="32" attr:height="32" />
+                </span>
             </button>
-            {move || read_oops.get()}
+
+            <button on:click=move |_| {
+                let backend = use_backend();
+                leptos::task::spawn_local(async move {
+                    let cookie_result = backend.get_cookie().await;
+                    log::info!("Getting cookie: {:?}", cookie_result);
+                });
+            }>
+                <span>
+                    "Get cookie" <Icon icon=i::MdiCookieOutline attr:width="32" attr:height="32" />
+                </span>
+            </button>
+
+            <button on:click=move |_| {
+                let backend = use_backend();
+                leptos::task::spawn_local(async move {
+                    let cookie_result = backend.clear_cookie().await;
+                    log::info!("Clearing cookie: {:?}", cookie_result);
+                });
+            }>
+                <span>
+                    "Clear cookie"
+                    <Icon icon=i::MdiCookieMinusOutline attr:width="32" attr:height="32" />
+                </span>
+            </button>
         </div>
     }
 }

@@ -9,6 +9,7 @@ const BASE_URL: &str = "/api";
 
 type BackendResult<T> = Result<Result<T, ApiError>, gloo_net::Error>;
 
+#[allow(dead_code)]
 impl Backend {
     pub fn new() -> Self {
         Self {}
@@ -32,7 +33,25 @@ impl Backend {
         }
     }
 
-    async fn post<Body, Res>(path: &str, body: &Body) -> BackendResult<Res>
+    async fn post<Res>(path: &str) -> BackendResult<Res>
+    where
+        Res: serde::de::DeserializeOwned,
+    {
+        let response = gloo_net::http::Request::post(&format!("{BASE_URL}{path}"))
+            .header("X-LISTEN-CSRF-PROTECTION", "1")
+            .send()
+            .await?;
+
+        if response.ok() {
+            let response: Res = response.json().await?;
+            Ok(Ok(response))
+        } else {
+            let response: ApiError = response.json().await?;
+            Ok(Err(response))
+        }
+    }
+
+    async fn post_json<Body, Res>(path: &str, body: &Body) -> BackendResult<Res>
     where
         Body: ?Sized + serde::Serialize,
         Res: serde::de::DeserializeOwned,
@@ -52,6 +71,10 @@ impl Backend {
         }
     }
 
+    pub async fn list_videos(&self) -> BackendResult<Vec<api::Video>> {
+        Self::get("/videos").await
+    }
+
     pub async fn get_video(&self, video: api::VideoId) -> BackendResult<api::Video> {
         Self::get(&format!("/videos/{video}")).await
     }
@@ -60,8 +83,20 @@ impl Backend {
         Self::get("/downloads").await
     }
 
-    pub async fn list_videos(&self) -> BackendResult<Vec<api::Video>> {
-        Self::get("/videos").await
+    pub async fn add_download(&self, request: &api::DownloadRequest) -> BackendResult<()> {
+        Self::post_json("/downloads/add", request).await
+    }
+
+    pub async fn get_cookie(&self) -> BackendResult<Option<String>> {
+        Self::get("/get-cookie").await
+    }
+
+    pub async fn set_cookie(&self) -> BackendResult<()> {
+        Self::post("/set-cookie").await
+    }
+
+    pub async fn clear_cookie(&self) -> BackendResult<()> {
+        Self::post("/clear-cookie").await
     }
 }
 

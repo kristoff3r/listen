@@ -90,8 +90,13 @@ pub struct AuthContext {
 #[serde(tag = "error", content = "message", rename_all = "snake_case")]
 pub enum ApiError {
     NotFound,
+    CsrfFailure,
     NotAuthorized,
-    MissingAuthToken,
     InternalServerError,
     Unknown(String),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DownloadRequest {
+    pub url: String,
 }
