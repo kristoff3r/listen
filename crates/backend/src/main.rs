@@ -217,6 +217,7 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
             "/downloads/add",
             post(handlers::download::add_video_to_queue),
         )
+        .route("/users/profile", get(handlers::user::get_profile))
         .route_layer(csrf_layer.clone())
         .layer(auth_required_layer.clone());
 

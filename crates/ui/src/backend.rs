@@ -102,6 +102,10 @@ impl Backend {
     pub async fn clear_auth(&self) -> BackendResult<()> {
         Self::post("/clear-auth").await
     }
+
+    pub async fn get_profile(&self) -> BackendResult<api::User> {
+        Self::get("/users/profile").await
+    }
 }
 
 pub fn use_backend() -> Backend {
