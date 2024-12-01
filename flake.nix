@@ -126,6 +126,8 @@
 
           yt-dlp
           ffmpeg
+          minica
+          openssl
         ];
       };
     };

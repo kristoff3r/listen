@@ -5,6 +5,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use axum_server::tls_rustls::RustlsConfig;
 use database::MIGRATIONS;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -97,15 +98,55 @@ async fn main() -> anyhow::Result<()> {
 
     let app = routes(state.clone());
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(
-        listener,
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .with_graceful_shutdown(shutdown_signal())
-    .await
-    .unwrap();
+    #[cfg(not(feature = "local-https"))]
+    serve_http(addr, app).await.unwrap();
 
+    #[cfg(feature = "local-https")]
+    serve_https(addr, app).await.unwrap();
+
+    Ok(())
+}
+
+async fn serve_https(addr: SocketAddr, app: Router<()>) -> anyhow::Result<()> {
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("Could not install default crypto provider for rustls");
+    let app = app.into_make_service_with_connect_info::<SocketAddr>();
+    let config = RustlsConfig::from_pem_file(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("dev-certificates")
+            .join("dev.listen.pwnies.dk.crt"),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("dev-certificates")
+            .join("dev.listen.pwnies.dk.key"),
+    )
+    .await.context(
+        "Could not create rustls config. Did you run the script to generate the self-signed certificates"
+    )?;
+
+    let handle = axum_server::Handle::new();
+    tokio::spawn({
+        let handle = handle.clone();
+        async move {
+            shutdown_signal().await;
+            tracing::trace!("received graceful shutdown signal. Telling tasks to shutdown");
+            handle.graceful_shutdown(Some(Duration::from_secs(1)));
+        }
+    });
+
+    axum_server::bind_rustls(addr, config)
+        .handle(handle)
+        .serve(app)
+        .await?;
+    Ok(())
+}
+
+async fn serve_http(addr: SocketAddr, app: Router<()>) -> anyhow::Result<()> {
+    let app = app.into_make_service_with_connect_info::<SocketAddr>();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
     Ok(())
 }
 

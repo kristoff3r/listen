@@ -11,6 +11,7 @@ members = ["crates/*"]
 anyhow = "1.0.90"
 axum = "0.7.7"
 axum-extra = "0.9.4"
+axum-server = "0.7.1"
 axum-test = "15.7.4"
 cfg-if = "1.0.0"
 console_error_panic_hook = "0.1"
@@ -33,6 +34,7 @@ gloo-net = "0.6.0"
 gloo-storage = "0.3.0"
 headers = "0.4.0"
 http = "1"
+hyper = "1.5.1"
 icondata = { version = "0.4.0", default-features = false, features = [
     "ant-design-icons",
     "bootstrap-icons",
@@ -55,6 +57,7 @@ rand = "0.8.5"
 reqwest = { version = "0.12.8", default-features = false, features = [
     "rustls-tls",
 ] }
+rustls = "0.23.19"
 serde = "1.0"
 serde_json = "1.0"
 structural-convert = "0.13.0"
@@ -89,6 +92,8 @@ panic = "abort"
 bin-package = "backend"
 lib-package = "frontend"
 name = "listen"
+
+bin-features = ["local-https"]
 
 # The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
 site-root = "target/site"
