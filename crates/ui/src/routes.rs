@@ -34,17 +34,28 @@ pub fn ListenRoutes() -> impl IntoView {
                             <Route path=path!("/videos") view=VideosPage />
                             <Route path=path!("/downloads") view=DownloadsPage />
                             <Route path=path!("/settings") view=SettingsPage />
-                            <Route
-                                path=path!("/authed")
-                                view=|| {
-                                    view! { <Outlet /> }
-                                }
-                            />
-
+                            <Route path=path!("/auth/login") view=LoginPage />
+                            <Route path=path!("/auth/callback") view=LoginCallback />
+                            <Route path=path!("/auth/logout") view=LogoutPage />
                         </Routes>
                     </ErrorBoundary>
                 </main>
             </Router>
         </div>
     }
+}
+
+#[component]
+pub fn LoginPage() -> impl IntoView {
+    "hello1"
+}
+
+#[component]
+pub fn LogoutPage() -> impl IntoView {
+    "hello2"
+}
+
+#[component]
+pub fn LoginCallback() -> impl IntoView {
+    "hello3"
 }

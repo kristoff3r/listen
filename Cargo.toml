@@ -111,6 +111,12 @@ assets-dir = "public"
 reload-port = 3001
 site-addr = "0.0.0.0:3000"
 
+# Get HTTPS to work
+# Run this command:
+#  socat openssl-listen:3002,fork,reuseaddr,cert=./crates/backend/dev-certificates/dev.listen.pwnies.dk.crt,key=./crates/backend/dev-certificates/dev.listen.pwnies.dk.key,verify=0 tcp-connect:localhost:3001
+reload-external-port = 3002
+reload-ws-protocol = "wss"
+
 end2end-cmd = "npx playwright test"
 end2end-dir = "end2end"
 

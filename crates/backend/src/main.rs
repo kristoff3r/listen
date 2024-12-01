@@ -112,10 +112,11 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn serve_https(addr: SocketAddr, app: Router<()>) -> anyhow::Result<()> {
+    let app = app.into_make_service_with_connect_info::<SocketAddr>();
+
     rustls::crypto::aws_lc_rs::default_provider()
         .install_default()
         .expect("Could not install default crypto provider for rustls");
-    let app = app.into_make_service_with_connect_info::<SocketAddr>();
     let config = RustlsConfig::from_pem_file(
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("dev-certificates")
