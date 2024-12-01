@@ -1,6 +1,6 @@
 use leptos::prelude::*;
 use leptos_router::{
-    components::{Outlet, Route, Router, Routes},
+    components::{Outlet, ParentRoute, Redirect, Route, Router, Routes},
     path,
 };
 
@@ -22,25 +22,39 @@ pub fn ListenRoutes() -> impl IntoView {
     };
 
     view! {
-        <div id="root" class="grid grid-cols-main grid-rows-1">
-            <Router>
-                <Nav />
-                <main class="flex flex-1 my-0 w-full h-screen text-center justif">
-                    <ErrorBoundary fallback=|errors| {
-                        view! { <ErrorTemplate errors=errors.into() /> }
-                    }>
-                        <Routes fallback>
-                            <Route path=path!("/") view=VideosPage />
-                            <Route path=path!("/videos") view=VideosPage />
-                            <Route path=path!("/downloads") view=DownloadsPage />
-                            <Route path=path!("/settings") view=SettingsPage />
-                            <Route path=path!("/auth/login") view=LoginPage />
-                            <Route path=path!("/auth/callback") view=LoginCallback />
-                            <Route path=path!("/auth/logout") view=LogoutPage />
-                        </Routes>
-                    </ErrorBoundary>
-                </main>
-            </Router>
+        <Router>
+            <ErrorBoundary fallback=|errors| {
+                view! { <ErrorTemplate errors=errors.into() /> }
+            }>
+                <Routes fallback>
+                    <ParentRoute path=path!("/") view=Nav>
+                        <Route path=path!("") view=move || view! { <Redirect path="/videos" /> } />
+                        <Route path=path!("/videos") view=VideosPage />
+                        <Route path=path!("/downloads") view=DownloadsPage />
+                        <Route path=path!("/settings") view=SettingsPage />
+                    </ParentRoute>
+                    <ParentRoute path=path!("/auth") view=Auth>
+                        <Route
+                            path=path!("")
+                            view=move || view! { <Redirect path="/auth/login" /> }
+                        />
+                        <Route path=path!("/login") view=LoginPage />
+                        <Route path=path!("/callback") view=LoginCallback />
+                        <Route path=path!("/logout") view=LogoutPage />
+                    </ParentRoute>
+                </Routes>
+            </ErrorBoundary>
+        </Router>
+    }
+}
+
+#[component]
+pub fn Auth() -> impl IntoView {
+    view! {
+        <div>
+            <div class="flex flex-col flex-1 justify-center items-center h-svh">
+                <Outlet />
+            </div>
         </div>
     }
 }

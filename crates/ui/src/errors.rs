@@ -57,7 +57,7 @@ pub fn ErrorTemplate(
     }}
 
     view! {
-        <div class="flex flex-col flex-1 justify-center items-center">
+        <div class="flex flex-col flex-1 justify-center items-center h-svh">
             <h1>{"Oh no! One or more errors have occured!"}</h1>
             <For
                 // a function that returns the items we're iterating over; a signal is fine
