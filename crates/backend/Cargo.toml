@@ -47,3 +47,4 @@ tracing-error.workspace = true
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 url = "2.5.4"
 youtube_dl.workspace = true
+rand.workspace = true

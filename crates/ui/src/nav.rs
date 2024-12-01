@@ -72,7 +72,12 @@ pub fn Nav() -> impl IntoView {
                                         <A href="/settings">
                                             <img
                                                 class="rounded-full w-12 h-12"
-                                                src=profile.profile_picture_url
+                                                src=profile
+                                                    .profile_picture_url
+                                                    .unwrap_or_else(|| {
+                                                        "https://avatars.githubusercontent.com/u/160317?v=4"
+                                                            .to_string()
+                                                    })
                                                 alt="Profile"
                                                 title=profile.handle
                                             />

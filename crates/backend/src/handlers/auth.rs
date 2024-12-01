@@ -2,8 +2,11 @@ use api::UserSessionId;
 use axum::{
     extract::{Request, State},
     response::IntoResponse,
+    Extension,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
+use oauth2::{AuthorizationCode, PkceCodeVerifier};
+use openidconnect::{IssuerUrl, Nonce};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -13,58 +16,96 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Claims {
+struct Claims {
     exp: usize,
     sub: UserSessionId,
 }
 
-const COOKIE_NAME: &str = "__Host-user_token";
+const USER_COOKIE_NAME: &str = "__Host-user_token";
 
-fn decode_jwt(
-    jwt_decoding_key: &jsonwebtoken::DecodingKey,
-    cookie_jar: &CookieJar,
-) -> Option<Claims> {
-    let token = cookie_jar.get(COOKIE_NAME)?;
-    let validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
-    match jsonwebtoken::decode::<Claims>(&token.value(), &jwt_decoding_key, &validation) {
-        Ok(claims) => Some(claims.claims),
-        Err(err) => {
-            tracing::error!("Unable to validate jwt: {err:?}");
-            None
+#[derive(Clone, Debug)]
+pub enum SessionState {
+    None,
+    Unauthenticated {
+        user_session: database::models::UserSession,
+    },
+    Authenticated {
+        user_session: database::models::UserSession,
+        user: database::models::User,
+    },
+}
+
+impl SessionState {
+    async fn lookup(
+        pool: &PgPool,
+        jwt_decoding_key: &jsonwebtoken::DecodingKey,
+        cookie_jar: &CookieJar,
+    ) -> Result<Self> {
+        let mut conn = pool.get().await.with_internal_server_error()?;
+        let Some(token) = cookie_jar.get(USER_COOKIE_NAME) else {
+            return Ok(Self::None);
+        };
+        let validation = jsonwebtoken::Validation::new(jsonwebtoken::Algorithm::HS256);
+        let claims =
+            match jsonwebtoken::decode::<Claims>(&token.value(), &jwt_decoding_key, &validation) {
+                Ok(claims) => claims.claims,
+                Err(err) => {
+                    tracing::error!("Unable to validate jwt: {err:?}");
+                    return Ok(Self::None);
+                }
+            };
+
+        let Some(user_session) = database::models::UserSession::get_by_id(&mut conn, claims.sub)
+            .await
+            .with_internal_server_error()?
+        else {
+            return Ok(Self::None);
+        };
+
+        let Some(user_id) = user_session.user_id else {
+            return Ok(Self::Unauthenticated { user_session });
+        };
+
+        if let Some(user) = database::models::User::get_by_id(&mut conn, user_id)
+            .await
+            .with_internal_server_error()?
+        {
+            Ok(Self::Authenticated { user_session, user })
+        } else {
+            Ok(Self::Unauthenticated { user_session })
         }
     }
 }
 
-pub async fn auth_optional(
+pub async fn user_session_layer(
+    State(pool): State<PgPool>,
     State(jwt_decoding_key): State<jsonwebtoken::DecodingKey>,
     cookie_jar: CookieJar,
     mut request: Request,
 ) -> Result<Request> {
-    if let Some(claims) = decode_jwt(&jwt_decoding_key, &cookie_jar) {
-        tracing::debug!("Inserting extension claims {claims:?}");
-        request.extensions_mut().insert(claims);
-    }
+    let session_state = SessionState::lookup(&pool, &jwt_decoding_key, &cookie_jar).await?;
+
+    request.extensions_mut().insert(session_state);
 
     Ok(request)
 }
 
-pub async fn auth_required(
-    State(jwt_decoding_key): State<jsonwebtoken::DecodingKey>,
-    cookie_jar: CookieJar,
+pub async fn auth_required_layer(
+    Extension(session_state): Extension<SessionState>,
     mut request: Request,
 ) -> Result<Request> {
-    if let Some(claims) = decode_jwt(&jwt_decoding_key, &cookie_jar) {
-        tracing::debug!("Inserting extension claims {claims:?}");
-        request.extensions_mut().insert(claims);
+    if let SessionState::Authenticated { user, .. } = session_state {
+        request.extensions_mut().insert(user);
         Ok(request)
     } else {
+        tracing::debug!("Request required authentication");
         Err(api::ApiError::NotAuthorized.into())
     }
 }
 
 pub async fn auth_logout(cookie_jar: CookieJar) -> Result<impl IntoResponse> {
     let cookie_jar = cookie_jar.remove(
-        Cookie::build(COOKIE_NAME)
+        Cookie::build(USER_COOKIE_NAME)
             .removal()
             .http_only(true)
             .secure(true)
@@ -81,7 +122,6 @@ pub async fn auth_url(
     State(oidc_client): State<OidcClient>,
     cookie_jar: CookieJar,
 ) -> Result<(CookieJar, axum::Json<api::AuthUrlResponse>)> {
-    tracing::info!("I am here");
     let mut conn = pool.get().await.with_internal_server_error()?;
 
     let auth_url = oidc_client.auth_url().await?;
@@ -114,7 +154,7 @@ pub async fn auth_url(
     };
 
     let cookie_jar = cookie_jar.add(
-        Cookie::build((COOKIE_NAME, token))
+        Cookie::build((USER_COOKIE_NAME, token))
             .http_only(true)
             .secure(true)
             .path("/")
@@ -131,8 +171,84 @@ pub async fn auth_url(
 }
 
 pub async fn auth_verify(
-    axum::Json(_request): axum::Json<api::AuthVerificationRequest>,
+    Extension(session_state): Extension<SessionState>,
+    State(pool): State<PgPool>,
+    State(oidc_client): State<OidcClient>,
+    axum::Json(request): axum::Json<api::AuthVerificationRequest>,
 ) -> Result<axum::Json<bool>> {
+    let mut conn = pool.get().await.with_internal_server_error()?;
+    let user_session = match session_state {
+        SessionState::None => return Err(api::ApiError::NotAuthorized.into()),
+        SessionState::Authenticated { .. } => return Ok(axum::Json(true)),
+        SessionState::Unauthenticated { user_session } => user_session,
+    };
+
+    macro_rules! get {
+        ($v:ident) => {
+            let Some($v) = user_session.$v else {
+                return Err(api::ApiError::NotAuthorized.into());
+            };
+        };
+    }
+    get!(oidc_issuer_url);
+    get!(csrf_token);
+    get!(nonce);
+    get!(pkce_code_verifier);
+
+    if request.state != csrf_token {
+        tracing::error!(
+            "Got bad CSRF token from oidc callback! {} != {}",
+            request.state,
+            csrf_token
+        );
+        return Err(api::ApiError::NotAuthorized.into());
+    }
+
+    let oidc_issuer_url = IssuerUrl::new(oidc_issuer_url.clone()).map_err(|e| {
+        tracing::error!("Bad issuer url {oidc_issuer_url}: {e:?}",);
+        api::ApiError::InternalServerError
+    })?;
+    let nonce = Nonce::new(nonce);
+    let pkce_code_verifier = PkceCodeVerifier::new(pkce_code_verifier);
+
+    let claims = oidc_client
+        .auth_verify(
+            AuthorizationCode::new(request.code),
+            pkce_code_verifier,
+            nonce,
+            oidc_issuer_url,
+        )
+        .await?;
+
+    let (user, _oidc_mapping) = match database::models::User::get_by_oidc(
+        &mut conn,
+        &claims.oidc_issuer_url,
+        &claims.oidc_id,
+    )
+    .await
+    .with_internal_server_error()?
+    {
+        Some(data) => data,
+        None => database::models::User::create(
+            &mut conn,
+            &format!("Anonymous{:04}", rand::random::<u64>() % 1000),
+            &claims.email,
+            claims.picture_url.as_ref().map(|s| s.as_str()),
+            &claims.oidc_issuer_url,
+            &claims.oidc_id,
+        )
+        .await
+        .with_internal_server_error()?,
+    };
+
+    database::models::UserSession::update_after_completed_login(
+        &mut conn,
+        user_session.user_session_id,
+        user.user_id,
+    )
+    .await
+    .with_internal_server_error()?;
+
     Ok(axum::Json(true))
 }
 

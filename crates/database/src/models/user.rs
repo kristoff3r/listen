@@ -5,6 +5,7 @@ use diesel::{
 use diesel_async::{
     scoped_futures::ScopedFutureExt, AsyncConnection, AsyncPgConnection, RunQueryDsl,
 };
+use openidconnect::{IssuerUrl, SubjectIdentifier};
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
@@ -21,7 +22,7 @@ pub struct User {
     pub last_activity: OffsetDateTime,
     pub email: String,
     pub handle: String,
-    pub profile_picture_url: String,
+    pub profile_picture_url: Option<String>,
     pub is_approved: bool,
     pub is_admin: bool,
 
@@ -36,7 +37,7 @@ pub struct User {
 struct NewUser<'a> {
     pub email: &'a str,
     pub handle: &'a str,
-    pub profile_picture_url: &'a str,
+    pub profile_picture_url: Option<&'a str>,
 }
 
 impl User {
@@ -44,9 +45,9 @@ impl User {
         conn: &mut AsyncPgConnection,
         handle: &str,
         email: &str,
-        profile_picture_url: &str,
-        oidc_issuer_url: &str,
-        oidc_issuer_id: &str,
+        profile_picture_url: Option<&str>,
+        oidc_issuer_url: &IssuerUrl,
+        oidc_issuer_id: &SubjectIdentifier,
     ) -> Result<(Self, OidcMapping)> {
         conn.transaction(|conn| {
             async move {
@@ -67,7 +68,7 @@ impl User {
         conn: &mut AsyncPgConnection,
         handle: &str,
         email: &str,
-        profile_picture_url: &str,
+        profile_picture_url: Option<&str>,
     ) -> Result<Self> {
         use crate::schema::users::dsl as u;
 
@@ -118,15 +119,15 @@ impl User {
 
     pub async fn get_by_oidc(
         conn: &mut AsyncPgConnection,
-        oidc_issuer_url: &str,
-        oidc_issuer_id: &str,
+        oidc_issuer_url: &IssuerUrl,
+        oidc_issuer_id: &SubjectIdentifier,
     ) -> Result<Option<(Self, OidcMapping)>> {
         use crate::schema::{oidc_mapping::dsl as m, users::dsl as u};
 
         let result = m::oidc_mapping
             .inner_join(u::users)
-            .filter(m::oidc_issuer_url.eq(oidc_issuer_url))
-            .filter(m::oidc_issuer_id.eq(oidc_issuer_id))
+            .filter(m::oidc_issuer_url.eq(oidc_issuer_url.as_str()))
+            .filter(m::oidc_issuer_id.eq(oidc_issuer_id.as_str()))
             .select((Self::as_select(), OidcMapping::as_select()))
             .first(conn)
             .await

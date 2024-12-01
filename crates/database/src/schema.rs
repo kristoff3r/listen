@@ -61,7 +61,7 @@ diesel::table! {
         email -> Varchar,
         #[max_length = 255]
         handle -> Varchar,
-        profile_picture_url -> Text,
+        profile_picture_url -> Nullable<Text>,
         is_approved -> Bool,
         is_admin -> Bool,
         created_at -> Timestamptz,

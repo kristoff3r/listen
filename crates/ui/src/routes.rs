@@ -147,7 +147,7 @@ pub fn LoginCallback() -> impl IntoView {
             let navigate = use_navigate();
             let params = use_query::<CallbackParams>();
 
-            let params = match params.get() {
+            let params = match params.get_untracked() {
                 Ok(params) => params,
                 Err(e) => {
                     set_error(Err(AppError::Crashed(format!(

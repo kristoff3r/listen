@@ -4,7 +4,7 @@ CREATE TABLE users (
     last_activity TIMESTAMPTZ NOT NULL DEFAULT now(),
     email VARCHAR(255) NOT NULL,
     handle VARCHAR(255) NOT NULL,
-    profile_picture_url TEXT NOT NULL,
+    profile_picture_url TEXT,
     is_approved BOOLEAN NOT NULL DEFAULT false,
     is_admin BOOLEAN NOT NULL DEFAULT false,
 

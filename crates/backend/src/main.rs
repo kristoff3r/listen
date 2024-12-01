@@ -203,9 +203,10 @@ fn routes(state: ServerState) -> Router {
 }
 
 fn api_routes(state: ServerState) -> Router<ServerState> {
-    let csrf_layer = map_request(csrf_protection::csrf_protection);
-    let auth_required_layer = map_request_with_state(state.clone(), handlers::auth::auth_required);
-    let auth_optional_layer = map_request_with_state(state, handlers::auth::auth_optional);
+    let csrf_layer = map_request(csrf_protection::csrf_layer);
+    let auth_required_layer =
+        map_request_with_state(state.clone(), handlers::auth::auth_required_layer);
+    let user_session_layer = map_request_with_state(state, handlers::auth::user_session_layer);
 
     // Routes will full protection: CSRF + authentication required
     let api_routes = Router::new()
@@ -231,12 +232,12 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
         .route("/auth/logout", post(handlers::auth::auth_logout))
         .route("/auth/auth-url", post(handlers::auth::auth_url))
         .route("/auth/auth-verify", post(handlers::auth::auth_verify))
-        .layer(csrf_layer)
-        .layer(auth_optional_layer);
+        .layer(csrf_layer);
 
     api_routes
         .merge(non_csrf_api_routes)
         .merge(unauthenticated_routes)
+        .layer(user_session_layer)
 }
 
 async fn shutdown_signal() {

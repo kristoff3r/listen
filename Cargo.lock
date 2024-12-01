@@ -348,6 +348,7 @@ dependencies = [
  "leptos_axum",
  "oauth2",
  "openidconnect",
+ "rand",
  "rustls 0.23.19",
  "serde",
  "serde_json",

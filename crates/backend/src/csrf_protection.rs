@@ -7,7 +7,7 @@ use leptos::prelude::*;
 
 use crate::error::ListenError;
 
-pub async fn csrf_protection(
+pub async fn csrf_layer(
     headers: HeaderMap,
     host: Host,
     request: Request,

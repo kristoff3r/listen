@@ -48,7 +48,7 @@ pub struct User {
     pub last_activity: OffsetDateTime,
     pub email: String,
     pub handle: String,
-    pub profile_picture_url: String,
+    pub profile_picture_url: Option<String>,
     pub is_approved: bool,
     pub is_admin: bool,
 }

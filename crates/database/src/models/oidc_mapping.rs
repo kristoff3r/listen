@@ -1,6 +1,7 @@
 use api::{OidcMappingId, UserId};
 use diesel::{delete, insert_into, prelude::*, QueryDsl};
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use openidconnect::{IssuerUrl, SubjectIdentifier};
 use structural_convert::StructuralConvert;
 use time::OffsetDateTime;
 
@@ -38,16 +39,16 @@ impl OidcMapping {
     pub async fn create(
         conn: &mut AsyncPgConnection,
         user_id: UserId,
-        oidc_issuer_url: &str,
-        oidc_issuer_id: &str,
+        oidc_issuer_url: &IssuerUrl,
+        oidc_issuer_id: &SubjectIdentifier,
     ) -> Result<Self> {
         use crate::schema::oidc_mapping::dsl as m;
 
         let result = insert_into(m::oidc_mapping)
             .values(NewOidcMapping {
                 user_id,
-                oidc_issuer_url,
-                oidc_issuer_id,
+                oidc_issuer_url: oidc_issuer_url.as_str(),
+                oidc_issuer_id: oidc_issuer_id.as_str(),
             })
             .get_result(conn)
             .await?;
