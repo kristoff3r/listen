@@ -119,7 +119,11 @@ async fn main() -> anyhow::Result<()> {
         let videos_dir = state.videos_dir.clone();
         let pool = state.pool.clone();
         tokio::task::spawn(async move {
-            handlers::download::handle_download_queue(pool, videos_dir).await
+            loop {
+                let Err(e) = handlers::download::handle_download_queue(&pool, &videos_dir).await;
+                tracing::error!("Error in handle_download_queue: {e:?}");
+                tokio::time::sleep(Duration::from_secs(5)).await;
+            }
         });
     }
 
@@ -215,6 +219,10 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
         .route("/videos", get(handlers::videos::list_videos))
         .route("/videos/:id", get(handlers::videos::get_video))
         .route("/downloads", get(handlers::download::list_downloads))
+        .route(
+            "/downloads/add",
+            post(handlers::download::add_video_to_queue),
+        )
         .route("/users/profile", get(handlers::user::get_profile))
         .route_layer(csrf_layer.clone())
         .layer(auth_required_layer.clone());
@@ -227,10 +235,6 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
 
     // Routes we want to access without authentication. They still need csrf protection
     let unauthenticated_routes = Router::new()
-        .route(
-            "/downloads/add",
-            post(handlers::download::add_video_to_queue),
-        )
         .route("/auth/logout", post(handlers::auth::auth_logout))
         .route("/auth/auth-url", post(handlers::auth::auth_url))
         .route("/auth/auth-verify", post(handlers::auth::auth_verify))

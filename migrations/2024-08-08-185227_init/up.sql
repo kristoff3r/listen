@@ -11,7 +11,7 @@ CREATE TABLE videos (
     updated_at timestamptz NOT NULL default now()
 );
 
-CREATE TYPE download_status AS ENUM ('pending', 'processing', 'complete', 'failed');
+CREATE TYPE download_status AS ENUM ('pending', 'processing', 'finished', 'failed');
 
 CREATE TABLE downloads (
     download_id uuid PRIMARY KEY default gen_random_uuid(),

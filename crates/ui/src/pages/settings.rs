@@ -35,6 +35,8 @@ pub fn settings_page() -> impl IntoView {
         _ => view! { <p>"Loading..."</p> }.into_any(),
     };
 
+    let youtube_url = RwSignal::new(String::new());
+
     view! {
         <div class="flex flex-col flex-1 justify-center items-center">
             <Transition fallback=move || view! {}>{profile_view}</Transition>
@@ -60,6 +62,32 @@ pub fn settings_page() -> impl IntoView {
             >
                 "Test being authorization pending"
             </button>
+            <div>
+                <input
+                    class="bg-gray-100 border"
+                    placeholder="Youtube URL"
+                    type="text"
+                    on:input=move |e| { youtube_url.set(event_target_value(&e)) }
+                />
+                <button
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-1 px-4 mt-4"
+                    on:click=move |_| {
+                        let backend = use_backend();
+                        leptos::task::spawn_local(async move {
+                            let response = backend
+                                .add_download(
+                                    &api::DownloadRequest {
+                                        url: youtube_url.get_untracked(),
+                                    },
+                                )
+                                .await;
+                            log::info!("Got response {:?}", response);
+                        });
+                    }
+                >
+                    "Add to download queue"
+                </button>
+            </div>
             <button
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
                 on:click=move |_| {

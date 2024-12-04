@@ -94,7 +94,10 @@ pub async fn list_downloads(
     Ok(Json(res))
 }
 
-pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Result<()> {
+pub async fn handle_download_queue(
+    pool: &PgPool,
+    videos_dir: &VideosDir,
+) -> Result<std::convert::Infallible> {
     info!("Starting download queue handler");
 
     loop {
@@ -104,6 +107,7 @@ pub async fn handle_download_queue(pool: PgPool, videos_dir: VideosDir) -> Resul
             .await
             .with_internal_server_error()?
         else {
+            info!("Sleeping");
             tokio::time::sleep(Duration::from_secs(5)).await;
             continue;
         };
@@ -201,6 +205,8 @@ async fn download_file(
             .arg("-i")
             .arg(f.path())
             .args([
+                "-filter:a",
+                "loudnorm",
                 "-y",
                 "-c:v",
                 "libx264",
