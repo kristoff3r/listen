@@ -12,7 +12,7 @@ pub fn LoginPage() -> impl IntoView {
     view! {
         <button
             class="gsi-material-button"
-            on:click={move |_| {
+            on:click=move |_| {
                 let backend = use_backend();
                 let navigate = use_navigate();
                 leptos::task::spawn_local(async move {
@@ -32,7 +32,7 @@ pub fn LoginPage() -> impl IntoView {
                         }
                     }
                 });
-            }}
+            }
         >
             <div class="gsi-material-button-state"></div>
             <div class="gsi-material-button-content-wrapper">

@@ -95,8 +95,13 @@ pub async fn auth_required_layer(
     mut request: Request,
 ) -> Result<Request> {
     if let SessionState::Authenticated { user, .. } = session_state {
-        request.extensions_mut().insert(user);
-        Ok(request)
+        if user.is_approved {
+            request.extensions_mut().insert(user);
+            Ok(request)
+        } else {
+            tracing::debug!("Request with pending user");
+            Err(api::ApiError::AuthorizationPending.into())
+        }
     } else {
         tracing::debug!("Request required authentication");
         Err(api::ApiError::NotAuthorized.into())

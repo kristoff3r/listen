@@ -11,7 +11,7 @@ pub fn DownloadsPage() -> impl IntoView {
     });
 
     view! {
-        <Transition fallback={move || view! { <Loading /> }}>
+        <Transition fallback=move || view! { <Loading /> }>
             <div class="flex w-full min-h-screen">
                 <div class="w-[20%] bg-blue-400">
                     {move || {

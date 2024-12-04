@@ -23,11 +23,11 @@ pub fn GlobalRedirectHandler() -> impl IntoView {
     move || {
         Some(view! {
             <Redirect
-                path={redirect_signal.get()?}
-                options={NavigateOptions {
+                path=redirect_signal.get()?
+                options=NavigateOptions {
                     resolve: false,
                     ..Default::default()
-                }}
+                }
             />
         })
     }

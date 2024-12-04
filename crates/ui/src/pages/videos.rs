@@ -37,9 +37,9 @@ pub fn VideosPage() -> impl IntoView {
     view! {
         <div class="flex w-full min-h-screen">
             <div class="w-[200px] bg-blue-400">
-                <Transition fallback={move || {
+                <Transition fallback=move || {
                     view! { <p>"Loading..."</p> }
-                }}>
+                }>
                     {move || match videos.get().map(|v| v.take()) {
                         Some(Ok(videos)) => view! { <VideoList videos /> }.into_any(),
                         Some(Err(e)) => view! { {format!("error loading video: {e}").into_any()} },
@@ -50,7 +50,7 @@ pub fn VideosPage() -> impl IntoView {
             </div>
             <div class="flex flex-1 items-center justify-center w-fit bg-black text-gray-400">
                 {move || match video_player.selected.get() {
-                    Some(id) => view! { <EmbedLocal id={id} /> }.into_any(),
+                    Some(id) => view! { <EmbedLocal id=id /> }.into_any(),
                     None => view! { <p>"Select a video"</p> }.into_any(),
                 }}
 
@@ -74,9 +74,9 @@ pub fn VideoListEntry(video: Video) -> impl IntoView {
     let is_selected = move || video_signals.selected.get() == Some(video.video_id);
     view! {
         <button
-            class:bg-green-400={is_selected}
+            class=("bg-green-400", is_selected)
             class="hover:bg-green-500"
-            on:click={move |_| video_signals.selected.set(Some(video.video_id))}
+            on:click=move |_| video_signals.selected.set(Some(video.video_id))
         >
             {video.title}
         </button>
@@ -106,8 +106,8 @@ pub fn EmbedLocal(id: VideoId) -> impl IntoView {
             // }
 
             // class="w-full rounded max-h-[calc(100vh-12rem)] data-[fullwindow=true]:max-h-screen data-[fullscreen=true]:max-h-screen"
-            id={VIDEO_PLAYER_ID}
-            on:timeupdate={move |_| { video_player.update_time() }}
+            id=VIDEO_PLAYER_ID
+            on:timeupdate=move |_| { video_player.update_time() }
 
             // poster=video.thumbnails.first().map(|thumb| thumb.url.clone())
             preload="auto"
@@ -115,7 +115,7 @@ pub fn EmbedLocal(id: VideoId) -> impl IntoView {
             autoplay=false
             playsinline=true
         >
-            <source src={format!("/api/videos/{id}/play")} type="video/mp4" />
+            <source src=format!("/api/videos/{id}/play") type="video/mp4" />
         </video>
     }
 }
@@ -127,7 +127,7 @@ pub fn EmbedYoutube(youtube_id: String) -> impl IntoView {
         <iframe
             width="560"
             height="315"
-            src={format!("https://www.youtube.com/embed/{youtube_id}")}
+            src=format!("https://www.youtube.com/embed/{youtube_id}")
             title="YouTube video player"
             // frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
