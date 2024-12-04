@@ -1,9 +1,11 @@
 use api::ApiError;
-use leptos::prelude::use_context;
+use leptos::prelude::{use_context, ReadSignal, RwSignal, Set};
 
 #[derive(Clone)]
 #[non_exhaustive]
-pub struct Backend {}
+pub struct Backend {
+    redirect_signal: RwSignal<Option<String>>,
+}
 
 const BASE_URL: &str = "/api";
 
@@ -12,10 +14,41 @@ type BackendResult<T> = Result<Result<T, ApiError>, gloo_net::Error>;
 #[allow(dead_code)]
 impl Backend {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            redirect_signal: RwSignal::new(None),
+        }
     }
 
-    async fn get<Res>(path: &str) -> BackendResult<Res>
+    pub fn redirect_signal(&self) -> ReadSignal<Option<String>> {
+        self.redirect_signal.read_only()
+    }
+
+    async fn json_response<Res>(&self, response: gloo_net::http::Response) -> BackendResult<Res>
+    where
+        Res: serde::de::DeserializeOwned,
+    {
+        if response.ok() {
+            let response: Res = response.json().await?;
+            Ok(Ok(response))
+        } else {
+            let response: ApiError = response.json().await?;
+            match response {
+                ApiError::NotAuthorized => {
+                    self.redirect_signal.set(Some("/auth/login".to_string()))
+                }
+                ApiError::AuthorizationPending => {
+                    self.redirect_signal.set(Some("/auth/pending".to_string()))
+                }
+                ApiError::CsrfFailure
+                | ApiError::NotFound
+                | ApiError::InternalServerError
+                | ApiError::Unknown(_) => (),
+            }
+            Ok(Err(response))
+        }
+    }
+
+    async fn get<Res>(&self, path: &str) -> BackendResult<Res>
     where
         Res: serde::de::DeserializeOwned,
     {
@@ -24,16 +57,10 @@ impl Backend {
             .send()
             .await?;
 
-        if response.ok() {
-            let response: Res = response.json().await?;
-            Ok(Ok(response))
-        } else {
-            let response: ApiError = response.json().await?;
-            Ok(Err(response))
-        }
+        self.json_response(response).await
     }
 
-    async fn post<Res>(path: &str) -> BackendResult<Res>
+    async fn post<Res>(&self, path: &str) -> BackendResult<Res>
     where
         Res: serde::de::DeserializeOwned,
     {
@@ -42,16 +69,10 @@ impl Backend {
             .send()
             .await?;
 
-        if response.ok() {
-            let response: Res = response.json().await?;
-            Ok(Ok(response))
-        } else {
-            let response: ApiError = response.json().await?;
-            Ok(Err(response))
-        }
+        self.json_response(response).await
     }
 
-    async fn post_json<Body, Res>(path: &str, body: &Body) -> BackendResult<Res>
+    async fn post_json<Body, Res>(&self, path: &str, body: &Body) -> BackendResult<Res>
     where
         Body: ?Sized + serde::Serialize,
         Res: serde::de::DeserializeOwned,
@@ -62,49 +83,51 @@ impl Backend {
             .send()
             .await?;
 
-        if response.ok() {
-            let response: Res = response.json().await?;
-            Ok(Ok(response))
-        } else {
-            let response: ApiError = response.json().await?;
-            Ok(Err(response))
-        }
+        self.json_response(response).await
     }
 
     pub async fn list_videos(&self) -> BackendResult<Vec<api::Video>> {
-        Self::get("/videos").await
+        self.get("/videos").await
     }
 
     pub async fn get_video(&self, video: api::VideoId) -> BackendResult<api::Video> {
-        Self::get(&format!("/videos/{video}")).await
+        self.get(&format!("/videos/{video}")).await
     }
 
     pub async fn list_downloads(&self) -> BackendResult<Vec<(api::Video, Vec<api::Download>)>> {
-        Self::get("/downloads").await
+        self.get("/downloads").await
     }
 
     pub async fn add_download(&self, request: &api::DownloadRequest) -> BackendResult<()> {
-        Self::post_json("/downloads/add", request).await
+        self.post_json("/downloads/add", request).await
     }
 
     pub async fn get_auth(&self) -> BackendResult<Option<serde_json::Value>> {
-        Self::get("/get-auth").await
+        self.get("/get-auth").await
     }
 
     pub async fn auth_url(&self) -> BackendResult<api::AuthUrlResponse> {
-        Self::post("/auth/auth-url").await
+        self.post("/auth/auth-url").await
     }
 
     pub async fn auth_verify(&self, request: &api::AuthVerificationRequest) -> BackendResult<bool> {
-        Self::post_json("/auth/auth-verify", request).await
+        self.post_json("/auth/auth-verify", request).await
     }
 
     pub async fn logout(&self) -> BackendResult<()> {
-        Self::post("/auth/logout").await
+        self.post("/auth/logout").await
     }
 
     pub async fn get_profile(&self) -> BackendResult<api::User> {
-        Self::get("/users/profile").await
+        self.get("/users/profile").await
+    }
+
+    pub async fn get_unauthorized(&self) -> BackendResult<()> {
+        self.get("/auth/test-unauthorized").await
+    }
+
+    pub async fn get_authorization_pending(&self) -> BackendResult<()> {
+        self.get("/auth/test-authorization-pending").await
     }
 }
 

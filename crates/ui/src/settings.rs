@@ -41,11 +41,34 @@ pub fn settings_page() -> impl IntoView {
             <button
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
                 on:click=move |_| {
+                    let backend = use_backend();
+                    leptos::task::spawn_local(async move {
+                        log::info!("Got response {:?}", backend.get_unauthorized().await);
+                    });
+                }
+            >
+                Test being unauthorized
+            </button>
+            <button
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
+                on:click=move |_| {
+                    let backend = use_backend();
+                    leptos::task::spawn_local(async move {
+                        log::info!("Got response {:?}", backend.get_authorization_pending().await);
+                    });
+                }
+            >
+                Test being authorization pending
+            </button>
+            <button
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
+                on:click=move |_| {
                     navigate("/auth/logout", NavigateOptions::default());
                 }
             >
-                {"Logout"}
+                Logout
             </button>
+
         </div>
     }
 }

@@ -1,6 +1,7 @@
 use std::{net::SocketAddr, path::PathBuf, time::Duration};
 
 use anyhow::Context;
+use api::ApiError;
 use axum::{
     middleware::{map_request, map_request_with_state},
     routing::{get, post},
@@ -8,6 +9,7 @@ use axum::{
 };
 use axum_server::tls_rustls::RustlsConfig;
 use database::MIGRATIONS;
+use error::ListenError;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tokio::signal;
@@ -232,6 +234,14 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
         .route("/auth/logout", post(handlers::auth::auth_logout))
         .route("/auth/auth-url", post(handlers::auth::auth_url))
         .route("/auth/auth-verify", post(handlers::auth::auth_verify))
+        .route(
+            "/auth/test-unauthorized",
+            get(|| async { ListenError::from(ApiError::NotAuthorized) }),
+        )
+        .route(
+            "/auth/test-authorization-pending",
+            get(|| async { ListenError::from(ApiError::AuthorizationPending) }),
+        )
         .layer(csrf_layer);
 
     api_routes

@@ -92,6 +92,7 @@ pub enum ApiError {
     NotFound,
     CsrfFailure,
     NotAuthorized,
+    AuthorizationPending,
     InternalServerError,
     Unknown(String),
 }

@@ -1,11 +1,7 @@
-use api::ApiError;
 use icondata as i;
 use leptos::prelude::*;
 use leptos_icons::Icon;
-use leptos_router::{
-    components::{Outlet, A},
-    hooks::use_navigate,
-};
+use leptos_router::components::{Outlet, A};
 
 use crate::backend::use_backend;
 
@@ -13,21 +9,11 @@ pub const SIZE: &str = "32";
 
 #[component]
 pub fn Nav() -> impl IntoView {
-    let navigate = use_navigate();
     let backend = use_backend();
 
     let profile = LocalResource::new(move || {
         let backend = backend.clone();
-        let navigate = navigate.clone();
-        async move {
-            match backend.get_profile().await.unwrap() {
-                Err(ApiError::NotAuthorized) => {
-                    navigate("/auth/login", Default::default());
-                    Err(ApiError::NotAuthorized)
-                }
-                res => res,
-            }
-        }
+        async move { backend.get_profile().await.unwrap() }
     });
 
     view! {

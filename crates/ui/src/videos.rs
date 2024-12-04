@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[component]
-pub fn videos_page() -> impl IntoView {
+pub fn VideosPage() -> impl IntoView {
     let backend = use_backend();
     let videos = LocalResource::new(move || {
         let backend = backend.clone();
@@ -57,7 +57,7 @@ pub fn videos_page() -> impl IntoView {
 }
 
 #[component]
-pub fn video_list(videos: Vec<Video>) -> impl IntoView {
+pub fn VideoList(videos: Vec<Video>) -> impl IntoView {
     let entries = videos
         .into_iter()
         .map(|video| view! { <VideoListEntry video /> })
@@ -66,7 +66,7 @@ pub fn video_list(videos: Vec<Video>) -> impl IntoView {
 }
 
 #[component]
-pub fn video_list_entry(video: Video) -> impl IntoView {
+pub fn VideoListEntry(video: Video) -> impl IntoView {
     let video_signals = expect_context::<VideoPlayer>();
     let is_selected = move || video_signals.selected.get() == Some(video.video_id);
     view! {

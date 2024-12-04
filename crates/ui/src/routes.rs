@@ -30,6 +30,7 @@ pub fn ListenRoutes() -> impl IntoView {
             <ErrorBoundary fallback=|errors| {
                 view! { <ErrorTemplate errors=errors.into() /> }
             }>
+                <RedirectHandler />
                 <Routes fallback>
                     <ParentRoute path=path!("/") view=Nav>
                         <Route path=path!("") view=move || redirect_replace("/videos") />
@@ -42,10 +43,29 @@ pub fn ListenRoutes() -> impl IntoView {
                         <Route path=path!("/login") view=LoginPage />
                         <Route path=path!("/callback") view=LoginCallback />
                         <Route path=path!("/logout") view=LogoutPage />
+                        <Route path=path!("/pending") view=PendingPage />
                     </ParentRoute>
                 </Routes>
             </ErrorBoundary>
         </Router>
+    }
+}
+
+#[component]
+pub fn RedirectHandler() -> impl IntoView {
+    let backend = use_backend();
+
+    move || {
+        let path = backend.redirect_signal().get()?;
+        Some(view! {
+            <Redirect
+                path
+                options=NavigateOptions {
+                    resolve: false,
+                    ..Default::default()
+                }
+            />
+        })
     }
 }
 
@@ -244,5 +264,19 @@ pub fn redirect_replace(path: &'static str) -> impl IntoView {
                 ..Default::default()
             }
         />
+    }
+}
+
+#[component]
+pub fn PendingPage() -> impl IntoView {
+    view! {
+        <div>
+            "Unfortunately your account is still pending review. You have to wait until it is approved."
+        </div>
+        <A href="/auth/logout">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4">
+                Click here to try logging into a different account instead.
+            </button>
+        </A>
     }
 }
