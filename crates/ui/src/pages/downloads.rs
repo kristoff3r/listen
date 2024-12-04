@@ -1,6 +1,6 @@
 use leptos::{either::EitherOf3, prelude::*};
 
-use crate::{backend::use_backend, loading::Loading};
+use crate::contexts::backend::use_backend;
 
 #[component]
 pub fn DownloadsPage() -> impl IntoView {
@@ -11,7 +11,7 @@ pub fn DownloadsPage() -> impl IntoView {
     });
 
     view! {
-        <Transition fallback=move || view! { <Loading /> }>
+        <Transition fallback={move || view! { <Loading /> }}>
             <div class="flex w-full min-h-screen">
                 <div class="w-[20%] bg-blue-400">
                     {move || {
@@ -33,7 +33,12 @@ pub fn DownloadsPage() -> impl IntoView {
 }
 
 #[component]
-pub fn download_list(downloads: Vec<(api::Video, Vec<api::Download>)>) -> impl IntoView {
+fn Loading() -> impl IntoView {
+    view! { <p>"Loading..."</p> }
+}
+
+#[component]
+fn DownloadList(downloads: Vec<(api::Video, Vec<api::Download>)>) -> impl IntoView {
     let entries = downloads
         .into_iter()
         .map(|(video, downloads)| view! { <DownloadListEntry video downloads /> })
@@ -42,7 +47,7 @@ pub fn download_list(downloads: Vec<(api::Video, Vec<api::Download>)>) -> impl I
 }
 
 #[component]
-pub fn download_list_entry(video: api::Video, downloads: Vec<api::Download>) -> impl IntoView {
+fn DownloadListEntry(video: api::Video, downloads: Vec<api::Download>) -> impl IntoView {
     view! {
         <div class="hover:bg-green-500">
             {video.title}

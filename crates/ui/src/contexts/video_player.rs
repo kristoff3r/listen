@@ -16,6 +16,7 @@ pub struct VideoStorage {
     playing: bool,
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PlaybackState {
     Playing,
@@ -59,4 +60,12 @@ impl VideoPlayer {
         self.current_time.set(current_time);
         self.duration.set(total_time);
     }
+}
+
+pub fn provide_video_player(video_player: VideoPlayer) {
+    provide_context(video_player);
+}
+
+pub fn use_video_player() -> VideoPlayer {
+    expect_context()
 }

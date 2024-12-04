@@ -1,25 +1,21 @@
-use backend::Backend;
+use contexts::{backend::provide_backend, global_redirect::provide_global_redirect};
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, Link, MetaTags, Stylesheet, Title};
 use routes::ListenRoutes;
 
-mod backend;
-pub mod contexts;
-pub mod downloads;
-pub mod errors;
-mod hooks;
-pub mod loading;
-pub mod nav;
+mod contexts;
+mod errors;
+mod layouts;
+mod pages;
 mod routes;
-pub mod settings;
-pub mod util;
-pub mod videos;
+mod util;
 
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
-    provide_context(Backend::new());
+    provide_global_redirect();
+    provide_backend();
 
     view! {
         <Stylesheet id="leptos" href="/pkg/listen.css" />
@@ -36,7 +32,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <AutoReload options=options.clone() />
+                <AutoReload options={options.clone()} />
                 <HydrationScripts options />
                 <MetaTags />
             </head>

@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use leptos_router::{hooks::use_navigate, NavigateOptions};
 
-use crate::backend::use_backend;
+use crate::contexts::backend::use_backend;
 
 #[component]
 pub fn settings_page() -> impl IntoView {
@@ -18,7 +18,7 @@ pub fn settings_page() -> impl IntoView {
             {"You are logged in as"}
             <div class="flex flex-row gap-2">
                 <img
-                    src=profile.profile_picture_url
+                    src={profile.profile_picture_url}
                     alt="avatar"
                     class="w-16 h-16 rounded-full"
                     width="16"
@@ -37,34 +37,34 @@ pub fn settings_page() -> impl IntoView {
 
     view! {
         <div class="flex flex-col flex-1 justify-center items-center">
-            <Transition fallback=move || view! {}>{profile_view}</Transition>
+            <Transition fallback={move || view! {}}>{profile_view}</Transition>
             <button
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
-                on:click=move |_| {
+                on:click={move |_| {
                     let backend = use_backend();
                     leptos::task::spawn_local(async move {
                         log::info!("Got response {:?}", backend.get_unauthorized().await);
                     });
-                }
+                }}
             >
                 Test being unauthorized
             </button>
             <button
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
-                on:click=move |_| {
+                on:click={move |_| {
                     let backend = use_backend();
                     leptos::task::spawn_local(async move {
                         log::info!("Got response {:?}", backend.get_authorization_pending().await);
                     });
-                }
+                }}
             >
                 Test being authorization pending
             </button>
             <button
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold rounded py-2 px-4 mt-4"
-                on:click=move |_| {
+                on:click={move |_| {
                     navigate("/auth/logout", NavigateOptions::default());
-                }
+                }}
             >
                 Logout
             </button>

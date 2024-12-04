@@ -17,6 +17,18 @@ pub enum AppError {
     ApiError(api::ApiError),
 }
 
+pub fn map_gloo_net_error<T>(
+    v: Result<Result<T, api::ApiError>, gloo_net::Error>,
+) -> Result<T, AppError> {
+    match v {
+        Err(e) => Err(AppError::Crashed(format!(
+            "Crashed while doing a backend request: {e:?}"
+        ))),
+        Ok(Err(e)) => Err(AppError::ApiError(e)),
+        Ok(Ok(v)) => Ok(v),
+    }
+}
+
 impl AppError {
     pub fn status_code(&self) -> StatusCode {
         match self {
@@ -65,18 +77,18 @@ pub fn ErrorTemplate(
             <h1>{"Oh no! One or more errors have occured!"}</h1>
             <For
                 // a function that returns the items we're iterating over; a signal is fine
-                each=move || { errors.clone().into_iter().enumerate() }
+                each={move || { errors.clone().into_iter().enumerate() }}
                 // a unique key for each item as a reference
-                key=|(index, _error)| *index
+                key={|(index, _error)| *index}
                 // renders each item to a view
-                children=move |error| {
+                children={move |error| {
                     let error_string = error.1.to_string();
                     let error_code = error.1.status_code().as_u16();
                     view! {
                         <h2>"Status code: " {error_code}</h2>
                         <p>"Error: " {error_string}</p>
                     }
-                }
+                }}
             />
 
         </div>

@@ -1,10 +1,12 @@
 use api::ApiError;
-use leptos::prelude::{use_context, ReadSignal, RwSignal, Set};
+use leptos::prelude::{expect_context, provide_context};
+
+use super::global_redirect::{use_global_redirect, GlobalRedirect};
 
 #[derive(Clone)]
 #[non_exhaustive]
 pub struct Backend {
-    redirect_signal: RwSignal<Option<String>>,
+    global_redirect: GlobalRedirect,
 }
 
 const BASE_URL: &str = "/api";
@@ -15,12 +17,8 @@ type BackendResult<T> = Result<Result<T, ApiError>, gloo_net::Error>;
 impl Backend {
     pub fn new() -> Self {
         Self {
-            redirect_signal: RwSignal::new(None),
+            global_redirect: use_global_redirect(),
         }
-    }
-
-    pub fn redirect_signal(&self) -> ReadSignal<Option<String>> {
-        self.redirect_signal.read_only()
     }
 
     async fn json_response<Res>(&self, response: gloo_net::http::Response) -> BackendResult<Res>
@@ -33,11 +31,9 @@ impl Backend {
         } else {
             let response: ApiError = response.json().await?;
             match response {
-                ApiError::NotAuthorized => {
-                    self.redirect_signal.set(Some("/auth/login".to_string()))
-                }
+                ApiError::NotAuthorized => self.global_redirect.navigate("/auth/login".to_string()),
                 ApiError::AuthorizationPending => {
-                    self.redirect_signal.set(Some("/auth/pending".to_string()))
+                    self.global_redirect.navigate("/auth/pending".to_string())
                 }
                 ApiError::CsrfFailure
                 | ApiError::NotFound
@@ -131,6 +127,10 @@ impl Backend {
     }
 }
 
+pub fn provide_backend() {
+    provide_context(Backend::new());
+}
+
 pub fn use_backend() -> Backend {
-    use_context::<Backend>().expect("Expected Backend in context")
+    expect_context()
 }
