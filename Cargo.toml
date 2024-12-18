@@ -48,7 +48,7 @@ icondata = { version = "0.5.0", default-features = false, features = [
 ] }
 jsonwebtoken = "9.3.0"
 leptos = { version = "0.7.0", features = ["nightly"] }
-leptos-use = "0.14.0-rc3"
+leptos-use = "0.14.0-rc5"
 leptos_axum = "0.7.0"
 leptos_icons = { git = "https://github.com/ozpv/leptos-icons", branch = "leptos-0.7.0" }
 leptos_meta = "0.7.0"
