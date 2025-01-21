@@ -29,7 +29,7 @@ hyper.workspace = true
 jsonwebtoken.workspace = true
 leptos = { workspace = true, features = ["ssr"] }
 leptos_axum.workspace = true
-oauth2 = "4.4.2"
+oauth2 = "5.0.0"
 openidconnect.workspace = true
 rustls.workspace = true
 serde = { workspace = true, features = ["derive"] }
