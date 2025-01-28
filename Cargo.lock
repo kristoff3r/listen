@@ -200,7 +200,7 @@ dependencies = [
  "http 1.2.0",
  "http-body 1.0.1",
  "http-body-util",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "hyper-util",
  "itoa",
  "matchit",
@@ -293,7 +293,7 @@ dependencies = [
  "http 1.2.0",
  "http-body 1.0.1",
  "http-body-util",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "hyper-util",
  "pin-project-lite",
  "rustls 0.23.20",
@@ -320,7 +320,7 @@ dependencies = [
  "cookie",
  "http 1.2.0",
  "http-body-util",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "hyper-util",
  "mime",
  "pretty_assertions",
@@ -353,7 +353,7 @@ dependencies = [
  "futures",
  "futures-util",
  "headers",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "jsonwebtoken",
  "leptos",
  "leptos_axum",
@@ -1724,9 +1724,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "1.5.2"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "256fb8d4bd6413123cc9d91832d78325c48ff41677595be797d90f42969beae0"
+checksum = "cc2b571658e38e0c01b1fdca3bbbe93c00d3d71693ff2770043f8c29bc7d6f80"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1765,7 +1765,7 @@ checksum = "f6884a48c6826ec44f524c7456b163cebe9e55a18d7b5e307cb4f100371cc767"
 dependencies = [
  "futures-util",
  "http 1.2.0",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "hyper-util",
  "rustls 0.23.20",
  "rustls-pki-types",
@@ -1786,7 +1786,7 @@ dependencies = [
  "futures-util",
  "http 1.2.0",
  "http-body 1.0.1",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "pin-project-lite",
  "socket2",
  "tokio",
@@ -3384,7 +3384,7 @@ dependencies = [
  "http 1.2.0",
  "http-body 1.0.1",
  "http-body-util",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "hyper-rustls 0.27.4",
  "hyper-util",
  "ipnet",
@@ -3828,7 +3828,7 @@ dependencies = [
  "gloo-net",
  "http 1.2.0",
  "http-body-util",
- "hyper 1.5.2",
+ "hyper 1.6.0",
  "inventory",
  "js-sys",
  "once_cell",
