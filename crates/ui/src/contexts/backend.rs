@@ -125,6 +125,10 @@ impl Backend {
     pub async fn get_authorization_pending(&self) -> BackendResult<()> {
         self.get("/auth/test-authorization-pending").await
     }
+
+    pub async fn get_crowd_list(&self) -> BackendResult<Vec<api::CrowdListEntry>> {
+        self.get("/crowd/list").await
+    }
 }
 
 pub fn provide_backend() {
