@@ -15,3 +15,13 @@ console_log.workspace = true
 leptos = { workspace = true, features = ["hydrate"] }
 log.workspace = true
 wasm-bindgen.workspace = true
+
+[dependencies.getrandom_v03]
+features = ["wasm_js"]
+package = "getrandom"
+version = "0.3.1"
+
+[dependencies.getrandom_v02]
+features = ["js"]
+package = "getrandom"
+version = "0.2"
