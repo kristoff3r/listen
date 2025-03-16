@@ -1,6 +1,6 @@
 use oauth2::{
-    AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier,
-    RedirectUrl, Scope,
+    reqwest, AuthorizationCode, ClientId, ClientSecret, CsrfToken, EndpointMaybeSet,
+    EndpointNotSet, EndpointSet, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, Scope,
 };
 use openidconnect::{
     core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata},
@@ -17,6 +17,7 @@ pub struct OidcClient {
     client_id: ClientId,
     client_secret: ClientSecret,
     redirect_url: RedirectUrl,
+    reqwest_client: reqwest::Client,
 }
 
 #[derive(Debug)]
@@ -49,26 +50,35 @@ impl OidcClient {
             client_id,
             client_secret,
             redirect_url,
+            reqwest_client: reqwest::Client::new(),
         }
     }
 
     // TODO: Do caching?
     async fn get_provider_metadata(&self) -> Result<CoreProviderMetadata> {
-        CoreProviderMetadata::discover_async(
-            self.issuer_url.clone(),
-            oauth2::reqwest::async_http_client,
-        )
-        .await
-        .map_err(|e| {
-            tracing::error!(
-                "Error doing metadata discovery for {}: {e:?}",
-                self.issuer_url.as_str()
-            );
-            api::ApiError::InternalServerError.into()
-        })
+        CoreProviderMetadata::discover_async(self.issuer_url.clone(), &self.reqwest_client)
+            .await
+            .map_err(|e| {
+                tracing::error!(
+                    "Error doing metadata discovery for {}: {e:?}",
+                    self.issuer_url.as_str()
+                );
+                api::ApiError::InternalServerError.into()
+            })
     }
 
-    async fn get_client(&self) -> Result<CoreClient> {
+    async fn get_client(
+        &self,
+    ) -> Result<
+        CoreClient<
+            EndpointSet,
+            EndpointNotSet,
+            EndpointNotSet,
+            EndpointNotSet,
+            EndpointMaybeSet,
+            EndpointMaybeSet,
+        >,
+    > {
         let client = CoreClient::from_provider_metadata(
             self.get_provider_metadata().await?,
             self.client_id.clone(),
@@ -122,8 +132,12 @@ impl OidcClient {
 
         let token_response = client
             .exchange_code(code)
+            .map_err(|e| {
+                tracing::error!("Configuration error while exchanging code: {e:?}",);
+                api::ApiError::InternalServerError
+            })?
             .set_pkce_verifier(pkce_code_verifier)
-            .request_async(oauth2::reqwest::async_http_client)
+            .request_async(&self.reqwest_client)
             .await
             .map_err(|e| {
                 tracing::error!(
