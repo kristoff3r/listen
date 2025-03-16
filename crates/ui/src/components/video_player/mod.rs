@@ -61,7 +61,7 @@ pub fn VideoPlayer(id: VideoId) -> impl IntoView {
                 <source src=src id=VIDEO_SOURCE_ID type="video/mp4" />
             </video>
         </div>
-        <div class="flex w-full px-2 gap-2 items-center bg-pink-400 h-[2rem]">
+        <div class="flex w-full pl-2 gap-2 items-center bg-pink-400 h-[2rem]">
             <VideoControls />
             <Clock />
             <Timeline />

@@ -20,7 +20,7 @@ pub fn Timeline() -> impl IntoView {
                     stroke-width=5
                     stroke-linecap="round"
                 />
-                <circle cx=move || format!("{x}%", x = x()) cy="50%" r=7 />
+                <circle cx=move || format!("{x}%", x = x()) cy="50%" r=5 />
             </svg>
         </div>
     }
