@@ -10,6 +10,7 @@ use axum::{
 use axum_server::tls_rustls::RustlsConfig;
 use database::MIGRATIONS;
 use error::ListenError;
+use handlers::crowd;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use tokio::signal;
@@ -34,7 +35,6 @@ pub mod error;
 pub mod handlers;
 mod oidc;
 mod server_state;
-pub mod ws;
 
 pub use db::PgPool;
 
@@ -110,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         jwt_encoding_key,
         jwt_decoding_key,
         google_oidc_client,
+        crowd_map: Default::default(),
     };
 
     info!("listening on {}", addr);
@@ -252,6 +253,7 @@ fn api_routes(state: ServerState) -> Router<ServerState> {
         .merge(non_csrf_api_routes)
         .merge(unauthenticated_routes)
         .layer(user_session_layer)
+        .nest("/crowd", crowd::routes())
 }
 
 async fn shutdown_signal() {

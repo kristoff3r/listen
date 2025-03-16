@@ -132,6 +132,7 @@
           minica
           openssl
           socat
+          websocat
         ];
       };
     };

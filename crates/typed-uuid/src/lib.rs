@@ -5,6 +5,7 @@ mod diesel_impls;
 
 #[cfg_attr(feature = "diesel", derive(diesel::FromSqlRow, diesel::AsExpression))]
 #[cfg_attr(feature = "diesel", diesel(sql_type = diesel::sql_types::Uuid))]
+
 pub struct Uuid<T> {
     uuid: uuid::Uuid,
     marker: PhantomData<T>,
@@ -102,6 +103,32 @@ impl<'de, T> serde::Deserialize<'de> for Uuid<T> {
         D: serde::Deserializer<'de>,
     {
         uuid::Uuid::deserialize(deserializer).map(From::from)
+    }
+}
+
+// bincode
+impl<T> bincode::Encode for Uuid<T> {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        self.uuid.as_bytes().encode(encoder)
+    }
+}
+
+impl<T, Context> bincode::Decode<Context> for Uuid<T> {
+    fn decode<D: bincode::de::Decoder<Context = Context>>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        Ok(uuid::Uuid::from_bytes(bincode::Decode::decode(decoder)?).into())
+    }
+}
+
+impl<'de, T, Context> bincode::BorrowDecode<'de, Context> for Uuid<T> {
+    fn borrow_decode<D: bincode::de::BorrowDecoder<'de, Context = Context>>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        Ok(uuid::Uuid::from_bytes(bincode::BorrowDecode::borrow_decode(decoder)?).into())
     }
 }
 

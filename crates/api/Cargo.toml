@@ -5,8 +5,9 @@ name = "api"
 version.workspace = true
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
+indexmap.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
-time = { workspace = true, features = ["serde"] }
-typed-uuid.path = "../typed-uuid"
+time.workspace = true
+typed-uuid.workspace = true

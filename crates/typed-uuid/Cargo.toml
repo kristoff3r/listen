@@ -12,6 +12,7 @@ default = []
 diesel = ["dep:diesel"]
 
 [dependencies]
+bincode.workspace = true
 diesel = { workspace = true, optional = true }
 serde.workspace = true
 uuid = { workspace = true, features = ["v4"] }

@@ -18,6 +18,8 @@ axum = { workspace = true, features = ["macros", "ws"] }
 axum-extra = { workspace = true, features = ["typed-header", "cookie"] }
 axum-server = { workspace = true, features = ["tls-rustls"] }
 axum-test.workspace = true
+bincode.workspace = true
+dashmap.workspace = true
 deadpool = { workspace = true, features = ["rt_tokio_1"] }
 diesel = { workspace = true, features = ["postgres", "time"] }
 diesel-async = { workspace = true, features = ["postgres", "deadpool"] }

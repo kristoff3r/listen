@@ -7,6 +7,8 @@ pub type VideoId = Uuid<Video>;
 pub type UserId = Uuid<User>;
 pub type UserSessionId = Uuid<UserSession>;
 pub type OidcMappingId = Uuid<OidcMapping>;
+pub type CrowdId = Uuid<CrowdState>;
+pub type CrowdQueueId = Uuid<CrowdQueueEntry>;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Download {
@@ -111,4 +113,60 @@ pub struct AuthUrlResponse {
 pub struct AuthVerificationRequest {
     pub state: String,
     pub code: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct CrowdListEntry {
+    pub started_time: time::UtcDateTime,
+    pub crowd_id: CrowdId,
+    pub name: String,
+    pub participant_count: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct CrowdState {
+    pub playback_time: f64,
+    pub is_paused: bool,
+    pub speed: f64,
+    pub currently_playing: Option<CrowdQueueId>,
+    pub queue: CrowdQueue,
+}
+
+pub type CrowdQueue = indexmap::IndexMap<CrowdQueueId, CrowdQueueEntry>;
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct CrowdQueueEntry {
+    pub video_id: VideoId,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum CrowdParticipantCommand {
+    SetPlaybackPosition(f64),
+    SetIsPaused(bool),
+    SetSpeed(f64),
+    GoTo(CrowdQueueId),
+    AddToQueue(VideoId),
+    MoveInQueue {
+        entry_to_move: CrowdQueueId,
+        position: CrowdQueuePosition,
+    },
+    DeleteFromQueue(CrowdQueueId),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum CrowdQueuePosition {
+    Before(CrowdQueueId),
+    Between(CrowdQueueId, CrowdQueueId),
+    After(CrowdQueueId),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum CrowdPlayerUpdate {
+    PlaybackPosition(f64),
+    IsPaused(bool),
+    Speed(f64),
+    Queue {
+        currently_playing: CrowdQueueId,
+        queue: CrowdQueue,
+    },
 }

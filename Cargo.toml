@@ -13,10 +13,12 @@ axum = "0.7.9"
 axum-extra = "0.9.6"
 axum-server = "0.7.2"
 axum-test = "16.4.1"
+bincode = { version = "2.0.1", features = ["derive"] }
 cfg-if = "1.0.0"
 codee = "0.2"
 console_error_panic_hook = "0.1"
 console_log = "1.0.0"
+dashmap = "6.1.0"
 deadpool = "0.12.2"
 diesel = { version = "2.2.8", features = [
     "postgres",
@@ -46,6 +48,7 @@ icondata = { version = "0.5.0", default-features = false, features = [
     "feather",
     "material-design-icons",
 ] }
+indexmap = { version = "2.8.0", features = ["serde"] }
 jsonwebtoken = "9.3.1"
 leptos = { version = "0.7.7", features = ["nightly"] }
 leptos-use = "0.15.6"
@@ -62,13 +65,13 @@ reqwest = { version = "0.12.14", default-features = false, features = [
     "rustls-tls",
 ] }
 rustls = "0.23.23"
-serde = "1.0"
+serde = { version = "1.0.0", features = ["derive"] }
 serde_json = "1.0"
 structural-convert = "0.13.0"
 strum = { version = "0.27.1", features = ["derive"] }
 tempfile = "3.19.0"
 thiserror = "2.0.12"
-time = "0.3.39"
+time = { version = "0.3.39", features = ["serde"] }
 tokio = "1.44.1"
 tokio-tungstenite = "0.26.2"
 tokio-util = "0.7.14"
@@ -85,6 +88,8 @@ youtube_dl = { version = "0.10.0", features = [
     "downloader-rustls-tls",
     "tokio",
 ] }
+
+typed-uuid.path = "crates/typed-uuid"
 
 [profile.wasm-release]
 codegen-units = 1
