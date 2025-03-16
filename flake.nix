@@ -96,9 +96,9 @@
       ourCargoLeptos = pkgs.callPackage ./nix/cargo-leptos.nix { inherit rustPlatform; };
       ourWasmBindgen = pkgs.wasm-bindgen-cli.override {
         inherit rustPlatform;
-        version = "0.2.99";
-        hash = "sha256-1AN2E9t/lZhbXdVznhTcniy+7ZzlaEp/gwLEAucs6EA=";
-        cargoHash = "sha256-DbwAh8RJtW38LJp+J9Ht8fAROK9OabaJ85D9C/Vkve4=";
+        version = "0.2.100";
+        hash = "sha256-3RJzK7mkYFrs7C/WkhW9Rr4LdP5ofb2FdYGz1P7Uxog=";
+        cargoHash = "sha256-tD0OY2PounRqsRiFh8Js5nyknQ809ZcHMvCOLrvYHRE=";
       };
       ourDieselCli = pkgs.callPackage ./nix/diesel-cli.nix { inherit rustPlatform; };
     in
