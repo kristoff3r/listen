@@ -8,7 +8,7 @@ use axum::{
 };
 use database::models::{Download, DownloadStatus};
 use tokio::process::Command;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 use youtube_dl::YoutubeDl;
 
 use crate::{
@@ -107,7 +107,7 @@ pub async fn handle_download_queue(
             .await
             .with_internal_server_error()?
         else {
-            info!("Sleeping");
+            debug!("Sleeping");
             tokio::time::sleep(Duration::from_secs(5)).await;
             continue;
         };
