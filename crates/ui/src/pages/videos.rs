@@ -77,13 +77,16 @@ pub fn VideoList(videos: Vec<Video>) -> impl IntoView {
 
 #[component]
 pub fn VideoListEntry(video: Video) -> impl IntoView {
-    let video_signals = use_video_player();
-    let is_selected = move || video_signals.selected.get() == Some(video.video_id);
+    let video_player = use_video_player();
+    let is_selected = move || video_player.selected.get() == Some(video.video_id);
     view! {
         <button
             class=("bg-green-400", is_selected)
             class="hover:bg-green-500"
-            on:click=move |_| video_signals.selected.set(Some(video.video_id))
+            on:click=move |_| {
+                video_player.pause();
+                video_player.selected.set(Some(video.video_id));
+            }
         >
             {video.title}
         </button>
