@@ -1,6 +1,8 @@
 use ui::App;
 use wasm_bindgen::prelude::wasm_bindgen;
 
+use uuid as _;
+
 #[wasm_bindgen]
 pub fn hydrate() {
     // initializes logging using the `log` crate

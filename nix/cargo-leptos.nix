@@ -1,5 +1,7 @@
 { darwin
 , fetchFromGitHub
+, openssl
+, pkg-config
 , lib
 , rustPlatform
 , stdenv
@@ -14,21 +16,23 @@ let
 in
 rustPlatform.buildRustPackage rec {
   pname = "cargo-leptos";
-  version = "0.2.24";
+  version = "0.2.29";
 
   src = fetchFromGitHub {
     owner = "leptos-rs";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-KNasxy/hEU04H/xAV3y92OtxBmYgA0RZjCQnC/XvBoo=";
+    hash = "sha256-z8oF/FFA/sZcjl5M2RTxNJvgvdK00jmWHJDc16kQGJQ=";
   };
 
-  cargoHash = "sha256-dxDmJVkkdT6hbhboyn8XwMJp379xAVZ8GFVp3F+LtWA=";
+  cargoHash = "sha256-Vce/qeKmw6tv9L+OLA3KUDBFgm1zkcRVo/C37FuACOI=";
 
   buildInputs = optionals isDarwin [
     SystemConfiguration
     Security
     CoreServices
+    openssl
+    pkg-config
   ];
 
   # https://github.com/leptos-rs/cargo-leptos#dependencies
