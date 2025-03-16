@@ -14,7 +14,6 @@ pub struct VideoStorage {
     selected: Option<VideoId>,
     current_time: f64,
     duration: f64,
-    playing: bool,
 }
 
 #[allow(dead_code)]
@@ -39,7 +38,6 @@ impl VideoPlayer {
     pub fn load(&self, state: &VideoStorage) {
         self.selected.set(state.selected);
         self.current_time.set(state.current_time);
-        // self.playing.set(state.playing);
         self.duration.set(state.duration);
     }
 
@@ -47,9 +45,12 @@ impl VideoPlayer {
         VideoStorage {
             selected: self.selected.get(),
             current_time: self.current_time.get(),
-            playing: self.playing.get(),
             duration: self.duration.get(),
         }
+    }
+
+    pub fn pause(&self) {
+        self.playing.set(false);
     }
 
     pub fn update_time(&self) {
@@ -71,13 +72,19 @@ impl VideoPlayer {
         video.load();
     }
 
-    #[expect(dead_code)]
     pub fn seek(&self, time: f64) {
         let Some(video) = get_element_by_id::<HtmlVideoElement>(VIDEO_PLAYER_ID) else {
             return;
         };
 
-        video.fast_seek(time).unwrap();
+        let time = time.clamp(0.0, self.duration.get_untracked());
+
+        video.set_current_time(time);
+    }
+
+    pub fn seek_relative(&self, time: f64) {
+        self.current_time.update(|t| *t += time);
+        self.seek(self.current_time.get_untracked());
     }
 
     pub fn set_ready(&self, value: bool) {

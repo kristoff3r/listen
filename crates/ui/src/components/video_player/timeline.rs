@@ -6,24 +6,14 @@ use crate::contexts::video_player::use_video_player;
 pub fn Timeline() -> impl IntoView {
     let video_player = use_video_player();
 
-    let time = move || {
-        let t = video_player.current_time.get() as i64;
-        let max_t = video_player.duration.get() as i64;
-        format!(
-            "{:02}:{:02}/{:02}:{:02}",
-            t / 60,
-            t % 60,
-            max_t / 60,
-            max_t % 60
-        )
-    };
+    let x = move || 100.0 * video_player.current_time.get() / video_player.duration.get();
+    let fillColor = "#fff";
 
     view! {
-        <>
-            <span>{time}</span>
-            <div class="w-full bg-green-400">
-                <span>TIMELINE WIP</span>
-            </div>
-        </>
+        <div class="w-full bg-green-400">
+            <svg class="w-full" height="2rem" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <circle cx=x cy=50 r=10 />
+            </svg>
+        </div>
     }
 }

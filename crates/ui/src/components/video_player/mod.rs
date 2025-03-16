@@ -1,10 +1,13 @@
+mod clock;
 mod controls;
 mod timeline;
 
 use api::VideoId;
+use clock::Clock;
 use controls::VideoControls;
 use leptos::{ev::keydown, prelude::*};
 use leptos_use::{use_document, use_event_listener};
+use timeline::Timeline;
 
 use crate::contexts::video_player::{
     use_video_player, video_src_url, VIDEO_PLAYER_ID, VIDEO_SOURCE_ID,
@@ -23,6 +26,12 @@ pub fn VideoPlayer(id: VideoId) -> impl IntoView {
             ev.prevent_default();
             ev.stop_propagation();
         }
+        if &ev.key() == "ArrowLeft" {
+            video_player.seek_relative(-3.0);
+        }
+        if &ev.key() == "ArrowRight" {
+            video_player.seek_relative(3.0);
+        }
     });
 
     view! {
@@ -34,6 +43,9 @@ pub fn VideoPlayer(id: VideoId) -> impl IntoView {
 
                 on:canplay=move |_| {
                     video_player.set_ready(true);
+                }
+                on:ended=move |_| {
+                    video_player.pause();
                 }
 
                 class="w-full max-h-[calc(100vh-2rem)]"
@@ -50,6 +62,10 @@ pub fn VideoPlayer(id: VideoId) -> impl IntoView {
                 <source src=src id=VIDEO_SOURCE_ID type="video/mp4" />
             </video>
         </div>
-        <VideoControls />
+        <div class="flex px-2 gap-2 items-center bg-pink-400 h-[2rem]">
+            <VideoControls />
+            <Clock />
+            <Timeline />
+        </div>
     }
 }
