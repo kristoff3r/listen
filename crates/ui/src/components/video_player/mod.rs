@@ -40,19 +40,18 @@ pub fn VideoPlayer(id: VideoId) -> impl IntoView {
                 on:waiting=move |_| {
                     video_player.set_ready(false);
                 }
-
                 on:canplay=move |_| {
                     video_player.set_ready(true);
                 }
                 on:ended=move |_| {
                     video_player.pause();
                 }
-
-                class="w-full max-h-[calc(100vh-2rem)]"
-                id=VIDEO_PLAYER_ID
                 on:timeupdate=move |_| {
                     video_player.update_time();
                 }
+
+                class="w-full max-h-[calc(100vh-2rem)]"
+                id=VIDEO_PLAYER_ID
 
                 preload="auto"
                 controls=false
@@ -62,7 +61,7 @@ pub fn VideoPlayer(id: VideoId) -> impl IntoView {
                 <source src=src id=VIDEO_SOURCE_ID type="video/mp4" />
             </video>
         </div>
-        <div class="flex px-2 gap-2 items-center bg-pink-400 h-[2rem]">
+        <div class="flex w-full px-2 gap-2 items-center bg-pink-400 h-[2rem]">
             <VideoControls />
             <Clock />
             <Timeline />
