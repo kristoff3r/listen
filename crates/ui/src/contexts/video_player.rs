@@ -106,6 +106,12 @@ impl VideoPlayer {
 
         self.playing.set(!playing);
     }
+
+    pub fn select(&self, id: VideoId) {
+        self.playing.set(false);
+        self.current_time.set(0.0);
+        self.selected.set(Some(id));
+    }
 }
 
 pub fn provide_video_player(video_player: VideoPlayer) {

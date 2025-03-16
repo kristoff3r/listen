@@ -84,8 +84,7 @@ pub fn VideoListEntry(video: Video) -> impl IntoView {
             class=("bg-green-400", is_selected)
             class="hover:bg-green-500"
             on:click=move |_| {
-                video_player.pause();
-                video_player.selected.set(Some(video.video_id));
+                video_player.select(video.video_id);
             }
         >
             {video.title}
