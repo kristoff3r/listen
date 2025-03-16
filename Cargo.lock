@@ -2261,8 +2261,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_icons"
-version = "0.4.0"
-source = "git+https://github.com/ozpv/leptos-icons?branch=leptos-0.7.0#56b6707f162705981b6cfe4fa726f8f00115ff81"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "632a7f189d29776b49573021591879d5df94a5b096225beb8d820026b4e1b497"
 dependencies = [
  "icondata_core",
  "leptos",
@@ -4542,6 +4543,7 @@ dependencies = [
  "leptos_meta",
  "leptos_router",
  "log",
+ "reactive_stores",
  "reqwest",
  "serde",
  "serde_json",

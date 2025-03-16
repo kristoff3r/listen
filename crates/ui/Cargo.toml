@@ -21,6 +21,7 @@ leptos_icons.workspace = true
 leptos_meta.workspace = true
 leptos_router.workspace = true
 log.workspace = true
+reactive_stores.workspace = true
 reqwest = { workspace = true, default-features = false, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

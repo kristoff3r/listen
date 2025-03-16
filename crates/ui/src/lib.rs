@@ -1,8 +1,12 @@
-use contexts::{backend::provide_backend, global_redirect::provide_global_redirect};
+use contexts::{
+    backend::provide_backend, global_redirect::provide_global_redirect,
+    video_store::VideoStoreProvider,
+};
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, Link, MetaTags, Stylesheet, Title};
 use routes::ListenRoutes;
 
+mod components;
 mod contexts;
 mod errors;
 mod layouts;
@@ -22,6 +26,7 @@ pub fn App() -> impl IntoView {
         <Title text="Listen" />
         <Link rel="icon" href="/favicon.png" sizes="32x32" />
         <ListenRoutes />
+        <VideoStoreProvider />
     }
 }
 
