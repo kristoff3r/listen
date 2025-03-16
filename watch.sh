@@ -6,4 +6,4 @@ socat openssl-listen:3002,fork,reuseaddr,cert=./crates/backend/dev-certificates/
 
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
-LEPTOS_RELOAD_WS_PROTOCOL="wss" LEPTOS_RELOAD_EXTERNAL_PORT="3002" cargo leptos watch "$@"
+cargo leptos watch "$@"

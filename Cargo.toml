@@ -131,3 +131,6 @@ watch = false
 
 # The environment Leptos will run in, usually either "DEV" or "PROD"
 env = "DEV"
+
+reload_external_port = 3002
+reload_ws_protocol = "wss"
