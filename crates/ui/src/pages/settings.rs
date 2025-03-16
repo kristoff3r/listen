@@ -4,7 +4,7 @@ use leptos_router::{hooks::use_navigate, NavigateOptions};
 use crate::contexts::backend::use_backend;
 
 #[component]
-pub fn settings_page() -> impl IntoView {
+pub fn SettingsPage() -> impl IntoView {
     let backend = use_backend();
     let navigate = use_navigate();
 

@@ -141,6 +141,7 @@ pub struct CrowdQueueEntry {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CrowdParticipantCommand {
+    Ping,
     SetPlaybackPosition(f64),
     SetIsPaused(bool),
     SetSpeed(f64),
@@ -162,6 +163,7 @@ pub enum CrowdQueuePosition {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum CrowdPlayerUpdate {
+    Ping,
     PlaybackPosition(f64),
     IsPaused(bool),
     Speed(f64),

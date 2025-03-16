@@ -65,6 +65,7 @@ impl ParticipantConnectionState {
     ) -> anyhow::Result<ShouldContinue> {
         let (time, update) = update.context("Broadcast died?")?;
         let is_interested = match &update {
+            api::CrowdPlayerUpdate::Ping => false,
             api::CrowdPlayerUpdate::PlaybackPosition(_) => {
                 time >= self.interested_after.playback_position
             }
@@ -99,6 +100,10 @@ impl ParticipantConnectionState {
                 let msg: api::CrowdParticipantCommand = serde_json::from_str(&msg)?;
                 let now = time::UtcDateTime::now();
                 match &msg {
+                    api::CrowdParticipantCommand::Ping => {
+                        let command = serde_json::to_string(&api::CrowdPlayerUpdate::Ping)?;
+                        self.websocket.send(Message::Text(command)).await?;
+                    }
                     api::CrowdParticipantCommand::SetPlaybackPosition(_) => {
                         self.interested_after.playback_position = now
                     }

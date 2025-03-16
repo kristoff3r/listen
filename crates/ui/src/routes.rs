@@ -31,6 +31,12 @@ pub fn ListenRoutes() -> impl IntoView {
                         <Route path=path!("/videos") view=pages::VideosPage />
                         <Route path=path!("/downloads") view=pages::DownloadsPage />
                         <Route path=path!("/settings") view=pages::SettingsPage />
+                        <Route path=path!("/crowd/player") view=pages::CrowdPlayerPage />
+                        <Route
+                            path=path!("/crowd/participant/:crowd_id")
+                            view=pages::CrowdParticipantPage
+                        />
+                        <Route path=path!("/crowd/list") view=pages::CrowdListPage />
                     </ParentRoute>
                     <ParentRoute path=path!("/auth") view=layouts::AuthLayout>
                         <Route path=path!("") view=move || redirect_replace("/auth/login") />

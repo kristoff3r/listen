@@ -29,7 +29,7 @@ impl PlayerConnectionState {
                 msg = self.websocket.recv() => self.handle_websocket_message(msg).await,
                 command = self.command_receiver.recv() =>self.handle_participant_command(command).await,
                 _ = tokio::time::sleep(tokio::time::Duration::from_secs(60)) => {
-                    tracing::debug!("Player connection closed");
+                    tracing::warn!("Player connection closed");
                     Ok(ShouldContinue::Stop)
                 }
             };
@@ -68,10 +68,15 @@ impl PlayerConnectionState {
         let msg = msg.context("Error while receiving websocket message")?;
         match msg {
             axum::extract::ws::Message::Text(msg) => {
-                let msg = serde_json::from_str(&msg)?;
-                self.update_publisher
-                    .send(msg)
-                    .context("Crowd closed, no more receivers?")?;
+                let msg: (time::UtcDateTime, api::CrowdPlayerUpdate) = serde_json::from_str(&msg)?;
+                if let api::CrowdPlayerUpdate::Ping = &msg.1 {
+                    let command = serde_json::to_string(&api::CrowdParticipantCommand::Ping)?;
+                    self.websocket.send(Message::Text(command)).await?;
+                } else {
+                    self.update_publisher
+                        .send(msg)
+                        .context("Crowd closed, no more receivers?")?;
+                }
                 Ok(ShouldContinue::Continue)
             }
             msg => anyhow::bail!("Unexpected websocket message: {msg:?}"),

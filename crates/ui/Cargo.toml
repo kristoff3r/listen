@@ -9,7 +9,7 @@ api = { path = "../api" }
 
 cfg-if.workspace = true
 codee = { workspace = true, features = ["json_serde"] }
-gloo-net = { workspace = true, features = ["http", "json"] }
+gloo-net = { workspace = true, features = ["http", "json", "websocket"] }
 gloo-storage.workspace = true
 http.workspace = true
 icondata.workspace = true
@@ -27,6 +27,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
+time.workspace = true
 web-sys = { workspace = true, features = ["AbortController", "AbortSignal"] }
 
 [features]
