@@ -15,7 +15,7 @@ axum-server = "0.7.2"
 axum-test = "16.4.1"
 bincode = { version = "2.0.1", features = ["derive"] }
 cfg-if = "1.0.0"
-codee = "0.2"
+codee = "0.3"
 console_error_panic_hook = "0.1"
 console_log = "1.0.0"
 dashmap = "6.1.0"
